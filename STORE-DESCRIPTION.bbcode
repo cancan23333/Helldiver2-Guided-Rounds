@@ -1,0 +1,285 @@
+[size=6][b]Guided Rounds v1.9.12 —— 制导弹丸 / Guided Rounds[/b][/size]
+[center][i]把 P-92 法令手枪的原版制导机制，装到武器清单里的每一把枪上[/i][/center]
+[center][i]The P-92 Warrant's own guidance, ported to every weapon on the list[/i][/center]
+
+[center][size=5][b][color=#008000]★ v1.9.12 —— 个别光能族（尤其无票者）锁不上的问题已修：死亡缓存只认 status=2，无票者的衰减宪法值不再把活体锁出候选 ★[/color][/b][/size]
+[b]「全局优先级层」这个开关删掉了[/b]，中间层出厂就是开着的。真想关掉它，只能手动把配置文件里的[b]glob_on[/b] 改成 0——那样 12～19 这几页（单枪优先级、瞄准优先级、5 页阵营优先级）整个都不会注册，菜单里自然也就没有它们，这正是开关做不到的事（选项包的行只能加、不能删）。另外，[b]关掉「手动瞄准优先级」以后，那 5 页默认写的就是全局表[/b]，页名前缀也会跟着变成「全局」——关掉单枪那层之后，本来也只有全局表还有意义。[b]The GLOBAL PRIORITY LAYER row is gone[/b]: the middle layer is on as shipped, and switching it off is a cfg edit (glob_on=0) that unregisters pages 12-19 entirely - something a toggle row could never do, since rows can only be added, never removed. Turning MANUAL AIM PRIORITY off now also puts the five faction pages back on the global table and titles them GLOBAL.[/center]
+
+[hr]
+
+[size=5][b]一句话说明（中文）[/b][/size]
+弹丸出膛后自动追踪敌人，而[b]伤害、初速、弹道仍然使用武器自己的数值[/b]（不会统一变成法令手枪的 90 伤害）。带索敌范围圆环、锁定标记与目标方框；武器按类型分页、可锁定的敌人按阵营分页，每把武器/每个敌人都能单独设置。
+
+[size=5][b]来源声明（基于他人作品二次修改）[/b][/size]
+本 mod 是 [url=https://ayakamods.com/mods/diy-your-weapon-to-shoot-like-donk-apw-1-%E5%8F%8D%E5%99%A8%E6%9D%90%E9%94%81%E5%A4%B4mod-diy-able.4226/]DIY your weapon to shoot like Donk（APW-1 反器材锁头 DIY-able）[/url] 的[b]二次修改产物[/b]：制导机制、内存偏移与大部分实现都来自那个 addon（最新上游为原作者 v4.16），本包在其基础上做独立开发与修复。如果你更偏好原作，请直接用原作；两个包修改同一批武器字段，[b]不要同时启用[/b]。
+
+[size=5][b]依赖 / Requirements[/b][/size]
+[list]
+[*][url=https://ayakamods.com/mods/bingus-shared-loader.3861/]Bingus Shared Loader[/url] —— v18+ / API 1（必需）
+[*][url=https://ayakamods.com/mods/hd2runtime.4260/]HD2Runtime[/url] —— v0.40.0+（必需）
+[*][url=https://ayakamods.com/mods/weakpoint-lock-on-v2.3981/]WeakPoint Lock-On v2[/url] —— v3.0（强烈推荐）
+[*][url=https://www.nexusmods.com/helldivers2/mods/16294]Vanilla Plus Megapack[/url] —— 必需：提供游戏内 MODS 页签（分类较多，需要新版带翻页的 ModOptionsMenu）
+[/list]
+缺少 HD2Runtime 时弹丸材质不会加载，弹丸会显示成缺材质的问号图标。
+
+[size=5][b]安装[/b][/size]
+[list=1]
+[*]先装 mod 加载器：[url=https://www.nexusmods.com/helldivers2/mods/4664]HD2 Arsenal[/url]
+[*]在 HD2 Arsenal 里装齐这四个 mod：[url=https://ayakamods.com/mods/bingus-shared-loader.3861/]Bingus Shared Loader[/url]、[url=https://ayakamods.com/mods/hd2runtime.4260/]hd2runtime[/url]、[url=https://www.nexusmods.com/helldivers2/mods/16294]Vanilla Plus Megapack[/url]（游戏里的 MODS 设置菜单就是它提供的，必须有）、以及本 mod（用管理器导入 [b]Guided-Rounds-v1.9.12.zip[/b]）
+[*]加载顺序，自上而下（换成别的顺序会不生效）：[b]Guided Rounds → Vanilla Plus Megapack → Bingus Shared Loader → hd2runtime[/b]
+[*]进游戏即可；设置菜单在 [b]Esc → MODS[/b]
+[/list]
+[b][color=#C00000]注意[/color][/b]：装过原版「APW-1 制导弹 / DIY-able」类 addon 的话请先卸载——两者改同一批武器字段，会互相冲突。
+
+[size=5][b]使用方法[/b][/size]
+[size=5][b]快速上手[/b][/size]
+[list=1]
+[*]把前置装齐、按上面的顺序排好，进游戏（第一次进任务会扫一次内存，开局几秒掉帧属正常）
+[*][b]Esc → MODS → 01 · GUIDED ROUNDS[/b]：打开「开启」与「加载弹丸材质」
+[*]把要用的枪写进 cfg 的 [b]weapons=[/b] 行（[b]%LOCALAPPDATA%/Hd2ApwGuidance/apw_guidance.cfg[/b]）——这一步决定哪些武器能制导，清单为空时连锁定环都不会画；哈希看日志里的 [b]WEAPON carried: 0x…[/b]
+[*]去这把枪的类别页（例如 [b]07 · GUIDED PISTOLS[/b]）把它从 OFF 改成「准心优先 / 最大血量大优先 / 最大血量小优先」
+[*]拿在手上：中央出范围圆环，敌人进圈出现锁定标记与方框，开枪后弹丸自动转向
+[*]想改「先锁谁」：在 [b]13 · GUIDED TARGET PRIORITY[/b] 打开「手动瞄准优先级」，再到 [b]14–19[/b] 的阵营页给单位填 1–9（1 最先锁，0 = 未设置）
+[*]想给某把枪单独一套：在 [b]12 · GUIDED WEAPON PRIORITY[/b] 选类别 → 把枪拨到「自定义此枪优先级」→ 回阵营页调数字（页名前缀会变成这把枪）
+[*]爆炸武器改自爆时间：[b]02 · GUIDED EXPLOSIVE FUSE[/b] 的 [b]round_life[/b]（秒，0 = 出厂值）
+[/list]
+[b]生效时机[/b]：数字和开关走 [b]api.set[/b]，当帧生效；[b]文字[/b]（类别名 / 行名 / 页名前缀）只在每次打开菜单时刷新，所以换类别或换编辑目标后要关一次菜单再打开。手改了 cfg 想立刻生效按 [b]F7[/b]。
+[b]常见现象[/b]：锁定环、标记、方框全不出现 → [b]weapons=[/b] 空了或拿的不是清单里的枪；12–19 页不存在 → cfg 里 [b]glob_on=0[/b]（只在文件里改）；阵营页名不跟着换枪 → 关开一次菜单；弹丸是问号 → 没开「加载弹丸材质」或没装 hd2runtime；子弹不转向 → 这把枪在类别页是 OFF，或目标不在索敌锥 / 被掩体挡住；偶发锁不上 → 按 [b]F7[/b] 重启 mod。
+
+逃生菜单的 [b]MODS[/b] 页签里一共有这些分类（新版 ModOptionsMenu 支持翻页，分类多也不会挤掉别人的）：
+
+[list]
+[*][b]GUIDED ROUNDS[/b] —— 总开关与通用参数（32 项）
+[*][b]GUIDED ASSAULT RIFLES / MARKSMAN RIFLES / SUBMACHINE GUNS / SHOTGUNS / EXPLOSIVE / SUPPORT WEAPONS / ENERGY WEAPONS / SPECIAL WEAPONS / PISTOLS[/b] —— [b]104 把武器按类型分页[/b]（12 / 7 / 8 / 10 / 3 / 31 / 12 / 3 / 18），支援武器一律进 SUPPORT。每把一个四选一：
+[list]
+[*][b]OFF[/b]：打普通弹
+[*][b]准心优先[/b]：制导，锁离准心最近的敌人
+[*][b]最大血量大优先[/b]：制导，锁最大血量最大的
+[*][b]最大血量小优先[/b]：制导，锁最大血量最小的
+[/list]
+[*][b]GUIDED TARGET PRIORITY[/b] —— 手动瞄准优先级总开关
+[*][b]GUIDED TERMINIDS 1/2[/b]（43 个单位）、[b]GUIDED AUTOMATONS 1/2/3[/b]（69 个）、[b]GUIDED ILLUMINATE[/b]（23 个）—— 每个可锁定敌人一个 0–9 滑动条
+[/list]
+
+[b]手动瞄准优先级[/b]
+[list]
+[*][b]总开关[/b]：打开后下面的数字才生效；关掉就完全回到原来的逻辑
+[*][b]数字含义[/b]：[b]1 = 最先锁定[/b]，数字越大越靠后；[b]0 = 未设置[/b]（排在所有已设数字之后）
+[*][b]数字相同[/b] → 交给当前瞄准模式判断：准心优先就锁离准心更近的；最大血量大/小优先照旧
+[*]例：范围内有 A(1) 与 B(2) → 锁 A；A、B 都是 1 → 准心优先时锁离准心更近的那个
+[*]页面没列出的目标也能设：cfg 里写 [font=courier]tp_<16位十六进制>=<数字>[/font]
+[/list]
+
+[b]常用参数（GUIDED ROUNDS）[/b]
+[list]
+[*][b]开启[/b]：总开关。关闭会把所有改过的内存按字节还原
+[*][b]锁定角度[/b]：索敌锥半角，同时决定屏幕上范围圆环的大小；0 = 不画圆环
+[*][b]锁定距离[/b]：索敌距离上限（米），出厂 250
+[*][b]出膛锁定生效时间[/b]：出厂 0.25 秒
+[*][b]自己绑定目标[/b]：引擎没锁上时由 mod 在瞄准锥里挑一个绑上，建议保持开启
+[*][b]掩体后不锁 / 忽略植物遮挡[/b]：视线检测用引擎自己的碰撞射线，从[b]手上的枪口[/b]发出
+[*][b]范围圆环 / 锁定标记 / 目标方框[/b]：三个锁定视觉元素，各自独立开关
+[*][b]锁定光能族穿梭舰 / 锁定机器人运输舰[/b]：默认[b]都关[/b]（运输舰是投送部队的载具，锁它会把弹丸从真正的目标上引开）
+[*][b]开镜锁定系数 / 开镜锁定范围跟随倍镜[/b]：默认关；关闭时圆环在任何倍率下屏幕大小一致，腰射与开镜锁的范围相同
+[*][b]加载弹丸材质[/b]：[b]必须保持开启[/b]，否则弹丸显示为缺材质问号
+[/list]
+
+[b]快捷键[/b]
+[list]
+[*][b]F7[/b]：重启本 mod（还原所有写入后重新武装），不会关闭 mod
+[*][b]F10[/b]：循环切换追踪弹类型（需先在 cfg 里把 [font=courier]seek_cycle[/font] 设为 1）
+[/list]
+
+[b]配置文件[/b]（以下开关只写在 cfg 里，不占菜单行：[font=courier]ship_scan[/font] / [font=courier]debug[/font] / [font=courier]los_debug[/font] / [font=courier]los_desc[/font] / [font=courier]scan_ms[/font] / [font=courier]targets_extra[/font] / [font=courier]targets_debug[/font]）
+[code]%LOCALAPPDATA%\Hd2ApwGuidance\apw_guidance.cfg[/code]
+[list]
+[*][font=courier]targets_extra=0x…,0x…[/font]：追加可锁定实体（例如想重新允许锁干扰器本体）
+[*][font=courier]targets_debug=1[/font]：日志会为血量表里每个资源打一行 [font=courier]TARGET CENSUS …[/font]，用来查清单里没有的实体
+[/list]
+
+[b]语言[/b]：分类名、武器名、单位名、选项文字都[b]跟随游戏语言[/b]——简体/繁体中文显示中文，其余语言显示英文；改了 Text Language 后重开一次逃生菜单即可。
+
+[size=5][b]亮点[/b][/size]
+[list]
+[*][b]每把枪一套敌人优先级（v1.9.3）[/b]：MODS → [b]GUIDED WEAPON PRIORITY[/b] 先选武器类别，再给该类别的枪选「自定义此枪优先级」或「编辑此枪优先级」（后者会把那 5 页指向它，选完自动退回「自定义」，v1.9.7），然后去那 5 页阵营优先级里单独调它；没调过的目标继续用共用表，关掉开关也不丢数字；开着自定义时，那 5 页的分类名前面会带上这把枪的名字（v1.9.4）；这一页只列已打开锁定的枪，关着的枪不出现，且分类名带 `01`–`19` 编号把同类页面排在一起（v1.9.5）；v1.9.6 起优先级分三层：类别页的笼统设定 < 全局层（可整体关闭）< 单枪层，第 13 页多了「全局优先级层」「编辑全局层」两个开关
+[*][b]所有设置都会记住[/b]（v1.9.2 修复：优先级数字、总开关等重启后不再丢失）
+[*]把 P-92 法令的原版制导机制移植到 [b]104 把武器[/b]，弹丸出膛后自动追踪
+[*][b]伤害、初速、弹道仍用武器自己的数值[/b]，不会统一成法令手枪的数据
+[*][b]武器按类型分 9 页[/b]，找枪不用在长列表里翻
+[*][b]手动瞄准优先级按阵营分页[/b]（135 个单位），数字小的先锁，相同则按当前瞄准模式
+[*]索敌范围圆环 + 原版锁定标记 + 目标方框，各自独立开关；[b]圆环画多大就锁多大[/b]
+[*][b]掩体后不锁[/b]从枪口发射射线判定，判的是子弹实际路径
+[*][b]开镜与腰射锁定范围不再打架[/b]，可选「跟随倍镜」按系数自适应
+[*][b]认知干扰器的电源可以锁定了[/b]：建筑没有姿态节点，本版回退到单位根骨骼取位置；不可摧毁的本体已从清单移除
+[*]菜单选项、分类名、单位名[b]跟随游戏语言[/b]自动中/英
+[*][b]F7 一键重启[/b]，清掉偶发的锁不上状态
+[/list]
+
+[size=5][b]已知问题[/b][/size]
+[list]
+[*][b]开局时有一小段扫描（正常，不修复）[/b]：mod 要先在内存里找到游戏数据表，一次性开销，找到后不再扫描。v1.9.2 起预算降到 1.5 毫秒/帧（原来 4），同样的查找拖得更长但基本不卡；cfg 的 [font=courier]scan_ms[/font] 仍可手改
+[*][b]作为主机时，没装本 mod 的队友会看到粉色问号弹丸[/b]：弹丸被换成 P-92 的弹丸实体，而资源包按机器加载；[b]作为客机加入别人的战局通常不会出现[/b]。缓解：队友把 HD2Runtime 升到 0.31 以上、或队里有人带 P-92 副武器
+[*][b]激光、电弧、火焰、喷射类等非弹丸武器无法制导，且不会支持[/b]（没有可追踪的弹丸）
+[*][b]认知干扰器的本体不再出现在锁定清单里[/b]（v1.9.0 起有意移除）；它的可摧毁电源可以锁。想锁本体：cfg 加 [font=courier]targets_extra=0x1445DF29152C9BE2[/font]
+[*]近战、投掷物与非玩家武器行不列在菜单里（仍可写进 cfg 的 [font=courier]weapons=[/font]）
+[*]与其它修改同一批武器/弹丸字段的 mod 可能冲突（包括修改 APW-1 准心的 mod）
+[/list]
+
+[size=5][b]多人游戏建议[/b][/size]
+[list]
+[*][b]推荐以客机身份加入别人的战局[/b]：制导只由你自己的机器计算，队友不会看到问号弹丸
+[*]作为主机时请提前告知队友可能看到问号弹丸，并按上面的办法缓解
+[*]建议 Friends Only / 邀请制房间
+[/list]
+
+[size=5][b]日志[/b][/size]
+[code]%LOCALAPPDATA%\Hd2ApwGuidance\ApwGuidance.log[/code]
+参数改动、锁定目标、制导状态、[font=courier]TARGET CENSUS[/font] 普查都写在这里；排查问题时把相关段落发出来即可。
+
+[size=5][b]卸载[/b][/size]
+关闭 mod 后所有内存写入都会还原；直接删除包即可。
+
+[size=5][b]源码与致谢[/b][/size]
+本 mod 以 [b]MIT 许可证[/b]开源：[url=https://github.com/cancan23333/Helldiver2-Guided-Rounds]github.com/cancan23333/Helldiver2-Guided-Rounds[/url]（旧链接会自动跳转）。
+本包是 [url=https://ayakamods.com/mods/diy-your-weapon-to-shoot-like-donk-apw-1-%E5%8F%8D%E5%99%A8%E6%9D%90%E9%94%81%E5%A4%B4mod-diy-able.4226/]DIY your weapon to shoot like Donk（APW-1 反器材锁头 DIY-able）[/url] 的二次修改产物，制导机制与内存偏移来自那个 addon。也感谢 Bingus Shared Loader、HD2Runtime、WeakPoint Lock-On、Vanilla Plus Megapack 的作者们。制导组件与场景资源版权属于 Arrowhead Game Studios。作者：cancan2333 & SoS2430。
+
+[hr]
+
+[size=6][b]Guided Rounds v1.9.12 —— Guided Rounds[/b][/size]
+[center][i]The P-92 Warrant's own guidance, ported to every weapon on the list[/i][/center]
+
+[size=5][b]In one line[/b][/size]
+Your rounds track the enemy after they leave the barrel, while [b]damage, muzzle velocity and ballistics stay the weapon's own[/b] (they do not become the Warrant's 90 damage). Includes an aim-cone ring, lock markers and a target box; weapons are grouped by type and lockable enemies by faction, and every weapon and every enemy can be tuned on its own.
+
+[size=5][b]Derivation notice (built on someone else's work)[/b][/size]
+This mod is a [b]modified derivative[/b] of [url=https://ayakamods.com/mods/diy-your-weapon-to-shoot-like-donk-apw-1-%E5%8F%8D%E5%99%A8%E6%9D%90%E9%94%81%E5%A4%B4mod-diy-able.4226/]DIY your weapon to shoot like Donk (APW-1 Anti-Materiel lock-on, DIY-able)[/url]: the guidance mechanism, the memory offsets and most of the implementation come from that addon (latest upstream: the author's v4.16), and this package is independent development and fixes on top of it. If you prefer the original, use that mod instead — both edit the same weapon fields, so [b]do not enable the two together[/b].
+
+[size=5][b]Requirements[/b][/size]
+[list]
+[*][url=https://ayakamods.com/mods/bingus-shared-loader.3861/]Bingus Shared Loader[/url] —— v18+ / API 1 (required)
+[*][url=https://ayakamods.com/mods/hd2runtime.4260/]HD2Runtime[/url] —— v0.40.0+ (required)
+[*][url=https://ayakamods.com/mods/weakpoint-lock-on-v2.3981/]WeakPoint Lock-On v2[/url] —— v3.0 (highly recommended)
+[*][url=https://www.nexusmods.com/helldivers2/mods/16294]Vanilla Plus Megapack[/url] —— required: supplies the in-game MODS tab (the category list wants the new paging ModOptionsMenu)
+[/list]
+Without HD2Runtime the projectile materials are never loaded and rounds show as missing-material question marks.
+
+[size=5][b]Installation[/b][/size]
+[list=1]
+[*]Install the mod loader first: [url=https://www.nexusmods.com/helldivers2/mods/4664]HD2 Arsenal[/url]
+[*]Install these four mods through HD2 Arsenal: [url=https://ayakamods.com/mods/bingus-shared-loader.3861/]Bingus Shared Loader[/url], [url=https://ayakamods.com/mods/hd2runtime.4260/]hd2runtime[/url], [url=https://www.nexusmods.com/helldivers2/mods/16294]Vanilla Plus Megapack[/url] (this is what provides the in-game MODS menu - it is required), and this mod (import [b]Guided-Rounds-v1.9.12.zip[/b])
+[*]Load order, top to bottom (any other order will not take effect): [b]Guided Rounds → Vanilla Plus Megapack → Bingus Shared Loader → hd2runtime[/b]
+[*]Launch the game; settings are in [b]Esc → MODS[/b]
+[/list]
+[b][color=#C00000]Note[/color][/b]: if the original "APW-1 guided rounds / DIY-able" addon is installed, remove it first — both edit the same weapon fields and conflict.
+
+[size=5][b]How to use[/b][/size]
+[size=5][b]Quick start[/b][/size]
+[list=1]
+[*]Install the prerequisites in the order above and launch the game (the first mission walks memory once; a few seconds of frame drops is normal)
+[*][b]Esc → MODS → 01 · GUIDED ROUNDS[/b]: enable ENABLE and LOAD PROJECTILE MATERIALS
+[*]Append the weapon's hash to the [b]weapons=[/b] line in [b]%LOCALAPPDATA%/Hd2ApwGuidance/apw_guidance.cfg[/b] - this decides which weapons can be guided at all, and an empty list draws no range ring; the hash is in the log as [b]WEAPON carried: 0x…[/b]
+[*]Open that weapon's class page (e.g. [b]07 · GUIDED PISTOLS[/b]) and change OFF to AIM FIRST / BIG FIRST / SMALL FIRST
+[*]In hand: the range ring appears, the lock marker and box appear for enemies inside it, and the round turns after firing
+[*]To change who is locked first: enable MANUAL AIM PRIORITY in [b]13 · GUIDED TARGET PRIORITY[/b], then set 1-9 per unit on the faction pages [b]14-19[/b] (1 first, 0 = unset)
+[*]For one weapon's own order: in [b]12 · GUIDED WEAPON PRIORITY[/b] pick the class, flip the weapon to CUSTOM PRIORITY, then edit the faction pages (their titles take that weapon's name)
+[*]Explosive fuse time: [b]round_life[/b] on [b]02 · GUIDED EXPLOSIVE FUSE[/b] (seconds, 0 = factory)
+[/list]
+[b]When it applies[/b]: numbers and toggles go through [b]api.set[/b] and apply in the same frame; [b]texts[/b] (category names, row labels, page prefixes) refresh only when the menu opens, so changing the class or the edit target needs one close/open. Press [b]F7[/b] to re-read a hand-edited cfg.
+[b]Troubleshooting[/b]: no ring, marker or box - [b]weapons=[/b] is empty or the weapon is not on the list; pages 12-19 missing - [b]glob_on=0[/b] in the cfg; faction titles stale - close and reopen the menu; question-mark rounds - LOAD PROJECTILE MATERIALS is off or hd2runtime is missing; a round that never turns - the weapon is OFF in its class page, or the target is outside the aim cone / behind cover; lock fails intermittently - press [b]F7[/b].
+
+The escape menu's [b]MODS[/b] tab carries these categories (the new ModOptionsMenu pages them, so a long list no longer pushes other mods out):
+
+[list]
+[*][b]GUIDED ROUNDS[/b] —— master switch and the shared parameters (32 rows)
+[*][b]GUIDED ASSAULT RIFLES / MARKSMAN RIFLES / SUBMACHINE GUNS / SHOTGUNS / EXPLOSIVE / SUPPORT WEAPONS / ENERGY WEAPONS / SPECIAL WEAPONS / PISTOLS[/b] —— [b]104 weapons grouped by type[/b] (12 / 7 / 8 / 10 / 3 / 31 / 12 / 3 / 18); support weapons always go to SUPPORT. One four-way choice each:
+[list]
+[*][b]OFF[/b]: plain rounds
+[*][b]AIM FIRST[/b]: guided, locks the enemy nearest the crosshair
+[*][b]BIG FIRST[/b]: guided, locks the enemy with the most maximum health
+[*][b]SMALL FIRST[/b]: guided, locks the enemy with the least maximum health
+[/list]
+[*][b]GUIDED TARGET PRIORITY[/b] —— the manual aim priority master switch
+[*][b]GUIDED TERMINIDS 1/2[/b] (43 units), [b]GUIDED AUTOMATONS 1/2/3[/b] (69), [b]GUIDED ILLUMINATE[/b] (23) —— one 0–9 slider per lockable enemy
+[/list]
+
+[b]Manual aim priority[/b]
+[list]
+[*][b]Master switch[/b]: the numbers below only count while it is on; off restores the old behaviour exactly
+[*][b]The number[/b]: [b]1 = locked first[/b], larger numbers come later; [b]0 = not set[/b] (those sort after every number you did set)
+[*][b]Equal numbers[/b] fall back to the aim mode: aim-first takes the enemy nearest the crosshair, big-first / small-first as before
+[*]Example: A(1) and B(2) in range → A is locked; both 1 → aim-first takes the nearer one
+[*]Targets not on the page can still be set in the cfg as [font=courier]tp_<16 hex digits>=<n>[/font]
+[/list]
+
+[b]Common settings (GUIDED ROUNDS)[/b]
+[list]
+[*][b]ENABLE[/b]: master switch; turning it off restores every byte it wrote
+[*][b]LOCK ANGLE[/b]: aim-cone half angle, and it sizes the on-screen range ring; 0 removes the ring
+[*][b]LOCK RANGE[/b]: furthest target accepted, in metres (250 shipped)
+[*][b]ARM TIME AFTER MUZZLE[/b]: 0.25 s shipped
+[*][b]BIND TARGET OURSELVES[/b]: when the engine locked nothing, pick one in the aim cone; keep it on
+[*][b]REQUIRES LINE OF SIGHT / SHOOT THROUGH FOLIAGE[/b]: the sight test uses the engine's own ray, cast [b]from the muzzle in your hands[/b]
+[*][b]RANGE RING / LOCK MARKERS / TARGET BOX[/b]: the three lock visuals, each with its own switch
+[*][b]LOCK ILLUMINATE WARPSHIPS / LOCK AUTOMATON DROPSHIPS[/b]: [b]both off as shipped[/b] (a transport is what lands troops, not a target)
+[*][b]SCOPE LOCK SCALE / FOLLOW THE SCOPE ZOOM[/b]: off by default; off keeps the ring the same on-screen size at every zoom
+[*][b]LOAD PROJECTILE MATERIALS[/b]: [b]keep it on[/b], or rounds render as missing-material question marks
+[/list]
+
+[b]Hotkeys[/b]
+[list]
+[*][b]F7[/b]: restarts the mod (restores every write, then takes it again); it does not switch the mod off
+[*][b]F10[/b]: cycles the seeker entity (set [font=courier]seek_cycle=1[/font] in the cfg first)
+[/list]
+
+[b]Config file[/b] (these live in the cfg only and cost no menu row: [font=courier]ship_scan[/font] / [font=courier]debug[/font] / [font=courier]los_debug[/font] / [font=courier]los_desc[/font] / [font=courier]scan_ms[/font] / [font=courier]targets_extra[/font] / [font=courier]targets_debug[/font])
+[code]%LOCALAPPDATA%\Hd2ApwGuidance\apw_guidance.cfg[/code]
+[list]
+[*][font=courier]targets_extra=0x…,0x…[/font]: add extra lockable entities (e.g. to allow the Cognitive Disruptor's body again)
+[*][font=courier]targets_debug=1[/font]: logs one [font=courier]TARGET CENSUS …[/font] line per resource in the health list, for finding an entity that is not in the addon's list
+[/list]
+
+[b]Language[/b]: category names, weapon names, unit names and option texts [b]follow the game language[/b] (Simplified/Traditional Chinese → Chinese, everything else → English). After changing Text Language, open the escape menu again.
+
+[size=5][b]Highlights[/b][/size]
+[list]
+[*][b]Per-weapon enemy priority (v1.9.3)[/b]: on MODS -> [b]GUIDED WEAPON PRIORITY[/b] pick a class, pick CUSTOM PRIORITY (or EDIT THIS WEAPON, which points the five pages at it and then falls back to CUSTOM, v1.9.7) for weapons of that class, then tune them on the five faction priority pages; untouched targets keep the shared table and switching a weapon off keeps its numbers; while a weapon is customised the five priority pages are named after it (v1.9.4); the page lists only lock-enabled weapons and the category names carry `01`-`19` numbers that keep pages of one kind together (v1.9.5); since v1.9.6 priority has three layers - the class-page mode < the GLOBAL table (switchable) < a weapon's own table, with two switches on page 13
+[*][b]Every setting is remembered[/b] (v1.9.2: priority numbers, the master switch and the rest survive a restart)
+[*]The P-92 Warrant's guidance, ported to [b]104 weapons[/b]: rounds track after they leave the barrel
+[*][b]Damage, muzzle velocity and ballistics stay the weapon's own[/b]
+[*][b]Weapons grouped into 9 type pages[/b], so finding a gun is not a long scroll
+[*][b]Manual aim priority split by faction[/b] (135 units): lower number first, ties decided by the aim mode
+[*]Range ring + stock lock markers + target box, each switchable; [b]what the ring shows is what is locked[/b]
+[*][b]Cover is respected[/b]: the ray starts at the muzzle in your hands, the bullet's real path
+[*][b]Hipfire and scope agree[/b], or follow the scope zoom with your own scale
+[*][b]The Cognitive Disruptor's power unit can be locked now[/b]: structures have no pose node, so the addon falls back to the unit's root bone; the indestructible body is no longer a target
+[*]Menu, category and unit names [b]follow the game language[/b]
+[*][b]F7 restarts in one keypress[/b]
+[/list]
+
+[size=5][b]Known issues[/b][/size]
+[list]
+[*][b]A short scan when a mission starts (expected, not going to be fixed)[/b]: the addon has to locate the game's data tables in memory once. Since v1.9.2 the budget is 1.5 ms/frame instead of 4 - the same search takes longer but no longer stutters; [font=courier]scan_ms[/font] in the cfg still overrides it
+[*][b]As the host, squadmates without this mod see pink question-mark rounds[/b]: the round is swapped for the P-92 projectile entity and packages load per machine; [b]joining as a client usually does not show it[/b]. Mitigation: squadmates on HD2Runtime 0.31+, or someone carrying the P-92 sidearm
+[*][b]Non-projectile weapons cannot be guided and never will be[/b] (laser, arc, flame, spray — there is no projectile to steer)
+[*][b]The Cognitive Disruptor body is deliberately not a target since v1.9.0[/b]; its destructible power unit is. To allow the body again: [font=courier]targets_extra=0x1445DF29152C9BE2[/font]
+[*]Melee weapons, throwables and non-player weapon rows are not in the menu (the cfg's [font=courier]weapons=[/font] line still accepts them)
+[*]May conflict with mods that edit the same weapon or projectile fields (including ones that change the APW-1 reticle)
+[/list]
+
+[size=5][b]Multiplayer advice[/b][/size]
+[list]
+[*][b]Join other squads as a client[/b]: guidance is computed on your own machine and squadmates never see question-mark rounds
+[*]If you host: tell your squadmates they may see question-mark rounds, and use the mitigations above
+[*]Friends Only / invite-only lobbies are recommended
+[/list]
+
+[size=5][b]Log[/b][/size]
+[code]%LOCALAPPDATA%\Hd2ApwGuidance\ApwGuidance.log[/code]
+Settings changes, locked targets, guidance state and the [font=courier]TARGET CENSUS[/font] lines are written here; attach the relevant part when reporting a problem.
+
+[size=5][b]Uninstall[/b][/size]
+Switching the mod off restores every memory write; deleting the package afterwards is enough.
+
+[size=5][b]Source and credits[/b][/size]
+Open source under the [b]MIT license[/b]: [url=https://github.com/cancan23333/Helldiver2-Guided-Rounds]github.com/cancan23333/Helldiver2-Guided-Rounds[/url] (the old URL redirects).
+This package is a modified derivative of [url=https://ayakamods.com/mods/diy-your-weapon-to-shoot-like-donk-apw-1-%E5%8F%8D%E5%99%A8%E6%9D%90%E9%94%81%E5%A4%B4mod-diy-able.4226/]DIY your weapon to shoot like Donk (APW-1 Anti-Materiel lock-on, DIY-able)[/url]; the guidance mechanism and memory offsets come from that addon. Thanks also to the authors of Bingus Shared Loader, HD2Runtime, WeakPoint Lock-On and Vanilla Plus Megapack. Guidance components and scene assets are copyright Arrowhead Game Studios. Authors: cancan2333 & SoS2430.
