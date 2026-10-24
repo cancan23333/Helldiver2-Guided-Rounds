@@ -1,6 +1,6 @@
 -- HD2-Addon: mods/cancan2333/guided_rounds
 -- Author: cancan2333 & SoS2430
--- Mod: Guided Rounds v1.9.12
+-- Mod: Guided Rounds v1.9.13
 -- zh: TARGET PRIORITY 的单位名用资源表中文名显示（英文名仍用于排序/过滤）。
 --
 -- WHAT v1.9.8 DOES - DEATH COMES FROM THE GAME, NOT FROM hp > 0
@@ -342,7 +342,7 @@
 -- ===================================================================
 
 local KEY = 'Hd2ApwGuidance3'
-local REVISION = 'guided-rounds-v1.9.12'
+local REVISION = 'guided-rounds-v1.9.13'
 if rawget(_G, KEY) then return end
 local state = { frame = 0, writes = 0, binds = 0, armed = false, leased = false, failures = 0,
                 sh_note = {} }
@@ -1927,6 +1927,215 @@ local WATCH = {
 -- Seeker entities we can lease instead of the P-92 one.  turn = the max turn
 -- speed inside that entity's SeekingMissileComponentData, so swapping changes
 -- both the look and how hard the round can turn.  Cycled live with seek_key.
+-- v1.9.13: built-in package loader -------------------------------------------
+-- HD2Runtime 0.40.1 and older keep requesting the packages (its synced assets
+-- also reach clients). Without Runtime, or with a newer one, the same native
+-- reference the game takes when a player carries the item is requested here:
+-- game.dll's RefcountedPackageSystem, then its queue and resource list are read
+-- until every part of the package is loaded. The table below is pinned to the
+-- build whose exact machine code was proven; every entry is re-read before the
+-- one native call, and a different build fails closed with a single log line.
+local ASSET_BUILD = {
+    game = '2E2C3B7C2500646DADD5F2B4C6E0504DBB7E7896139F64CDDC0D1813C718F51E',
+    exe = 'F5FEE03DCFDB2E553A4752C283590950AC13316B376D8196AA556FF0400D5F06',
+    instance = 55037616,   -- game.dll: RefcountedPackageSystem instance pointer
+    manager = 27329032,    -- exe: engine global that owns the package manager
+    request = {
+        rva = 19915600,
+        proof = '4585c00f8475010000415641574883ec3848895c24504c8bfa48896c24584c8bf1488974246048897c24304c896424284c8d25b9244d024c896c24204c8d2d89254d02418be866660f1f840000000000418b560833c0498b37458b46184c0fafc6448d4aff85d27459498b0e0f1f40008bd84903d84923d948c1e3044803d94839330f84f7000000ffc03bc272e24d8b5e104c8bd133c0660f1f8400000000008bd84903d84923d948c1e3044903da488b0b493bcb740d483bce7408ffc03bc272de33db48893348c7430801000000488b15cade01024c8d05b38b0001488b7b08498bcc4c8bce488d4216493bc5480f42caba1600000048890da2de0102e8cdf41eff4c8b0596de0102488d0db71bfc00ffc04c8bcf4863d04903d04889157dde0102488d15f63ffc00e8819e430048837b08017514488b057b7e0202488bce488b5010ff92f00200004983c7084883ed010f85f8feffff4c8b6c24204c8b642428488b7c2430488b742460488b6c2458488b5c24504883c438415f415ec348',
+    },
+    release = {
+        rva = 19916000,
+        proof = '4585c00f8460010000415641574883ec3848895c24504c8bfa48896c24584c8bf148897424604c896424284c8d252e234d024c896c24204c8d2dfe234d0248897c2430418be866660f1f840000000000498b374885f60f84d9000000418b4e0833c0418b5618480fafd6448d49ff85c90f84bf0000004d8b060f1f80000000008bd84803da4923d948c1e3044903d8483933740bffc03bc172e6e996000000488b7b084885ff0f8489000000488b155ddd01024c8d05468a000148ffcf498bcc4c8bce48897b08488d4216493bc5480f42caba1600000048890d32dd0102e85df31eff4c8b0526dd0102488d0d471afc00ffc04c8bcf4863d04903d04889150ddd0102488d15163ffc00e8119d430048837b0800751f488bd6498bcee89f174300488b05007d0202488bce488b5010ff92000300004983c7084883ed010f850dffffff4c8b6c24204c8b642428488b7c2430488b742460488b6c2458488b5c24504883c438415f415ec3cccccccccccc4883ec28488b05ad7c0202488b481048',
+    },
+    has_loaded = {
+        rva = 3281712,
+        proof = '4883ec28488b05cdee6e01488bd1488b8800040000488b8908020000e82fc72e004c8bc84885c0750733c04883c428c3458b411833c04585c074164d8b492090498b14c1837a1c0475dfffc0413bc072efb8010000004883c428c3cccccccccc',
+    },
+    find_package = {
+        rva = 6347392,
+        proof = '48895c2408488974241048897c24188bb9800000004533d285ff7440488bb1880000000f1f4000660f1f8400000000004a8b1cd633c0448b4b184585c974154c8b5b204d8b04c3493950107421ffc041',
+    },
+    engine = {
+        package_manager = 1024,
+        resource_manager = 520,
+        list = 136,
+        list_count = 128,
+        package_id = 16,
+        part_count = 24,
+        parts = 32,
+        part_state = 28,
+        loaded_state = 4,
+        queue = {
+            head = 12828, tail = 12832, entries = 536, stride = 24,
+            load_flag = 16, capacity = 512,
+        },
+    },
+    map = { capacity = 8, entries = 0 },
+}
+-- Package identities from the generated loadout catalogs (only these six are
+-- ever requested; a name without an id is skipped, never guessed).
+local ASSET_PACKAGE = {
+    ['P-92 Warrant'] = '0x5D5C93EF05A46880',
+    ['MLS-4X Commando'] = '0xC0052E5B38E18C33',
+    ['EXO-45 Patriot Exosuit'] = '0x22749A294788AF66',
+    ['MS-11 Solo Silo'] = '0x2947AFE42093062F',
+    ['P-33 Missile Pistol'] = '0x64C37A90C0D906DE',
+    ['FAF-14 Spear'] = '0x530BB611A14B6CE3',
+}
+
+local function asset_unhex(hex)
+    local out = {}
+    for i = 1, #hex, 2 do
+        out[#out + 1] = string.char(tonumber(hex:sub(i, i + 1), 16) or 0)
+    end
+    return table.concat(out)
+end
+-- 0x0123456789ABCDEF -> the 8 bytes the catalogs compare against (little endian).
+local function asset_id(hex)
+    local out = {}
+    for i = #hex - 1, 3, -2 do
+        out[#out + 1] = string.char(tonumber(hex:sub(i, i + 1), 16) or 0)
+    end
+    return table.concat(out)
+end
+local function asset_fail(why)
+    if not state.asset_why then
+        state.asset_why = why
+        log('ASSET built-in loader unavailable: ' .. why)
+    end
+end
+local function asset_prove()
+    if state.asset_pins then return state.asset_pins end
+    if state.asset_why then return nil end
+    if not base or not exe_base then asset_fail('game modules are not mapped yet') return nil end
+    local function ok(addr, proof)
+        local want = asset_unhex(proof)
+        return rd(addr, #want) == want
+    end
+    if not ok(base + ASSET_BUILD.request.rva, ASSET_BUILD.request.proof) then
+        asset_fail('game.dll does not match the proven package request function') return nil
+    end
+    if not ok(base + ASSET_BUILD.release.rva, ASSET_BUILD.release.proof) then
+        asset_fail('game.dll does not match the proven package release function') return nil
+    end
+    if not ok(exe_base + ASSET_BUILD.has_loaded.rva, ASSET_BUILD.has_loaded.proof) then
+        asset_fail('exe does not match the proven package has_loaded function') return nil
+    end
+    if not ok(exe_base + ASSET_BUILD.find_package.rva, ASSET_BUILD.find_package.proof) then
+        asset_fail('exe does not match the proven package lookup function') return nil
+    end
+    -- The global holds a pointer to the system; its first 32 bytes are the
+    -- reference map (capacity even, allocated entries non-zero).
+    local inst = ptr8(base + ASSET_BUILD.instance)
+    local hdr = inst and rd(inst, 32)
+    local capacity = hdr and u32(hdr, ASSET_BUILD.map.capacity)
+    local entries = hdr and u32(hdr, ASSET_BUILD.map.entries)
+    if not ptr_ok(inst) or not capacity or capacity < 16 or capacity > 65536
+        or capacity % 2 ~= 0 or not entries or entries == 0 then
+        asset_fail('package reference map shape changed') return nil
+    end
+    state.asset_pins = { instance = inst, request = base + ASSET_BUILD.request.rva }
+    return state.asset_pins
+end
+local function asset_request(hex)
+    local pins = asset_prove()
+    if not pins then return nil, state.asset_why or 'not proven' end
+    local ids = ffi.new('uint64_t[1]')
+    ffi.copy(ids, asset_id(hex), 8)
+    local request = ffi.cast('void (*)(void *, const uint64_t *, uint32_t)', pins.request)
+    request(ffi.cast('void *', pins.instance), ids, 1)
+    return true
+end
+-- Reads the engine's own answer for one package: resident, still loading,
+-- queued behind the load throttle, or not known to the engine at all.
+local function asset_pkg_state(hex)
+    local pins = asset_prove()
+    if not pins then return 'error' end
+    local wanted = asset_id(hex)
+    local engine = ptr8(exe_base + ASSET_BUILD.manager)
+    local manager = engine and ptr8(engine + ASSET_BUILD.engine.package_manager)
+    local resources = manager and ptr8(manager + ASSET_BUILD.engine.resource_manager)
+    if not resources then return 'error' end
+    local count = u32(rd(resources + ASSET_BUILD.engine.list_count, 4) or '', 0)
+    if not count or count > 8192 then return 'error' end
+    if count > 0 then
+        local list = ptr8(resources + ASSET_BUILD.engine.list)
+        for i = 0, count - 1 do
+            local package = list and ptr8(list + i * 8)
+            if package and rd(package + ASSET_BUILD.engine.package_id, 8) == wanted then
+                local parts = u32(rd(package + ASSET_BUILD.engine.part_count, 4) or '', 0)
+                if not parts or parts == 0 or parts > 64 then return 'loading' end
+                local array = ptr8(package + ASSET_BUILD.engine.parts)
+                if not array then return 'loading' end
+                for j = 0, parts - 1 do
+                    local part = ptr8(array + j * 8)
+                    local part_state = part and u32(rd(part + ASSET_BUILD.engine.part_state, 4) or '', 0)
+                    if not part_state or part_state ~= ASSET_BUILD.engine.loaded_state then
+                        return 'loading'
+                    end
+                end
+                return 'resident'
+            end
+        end
+    end
+    local q = ASSET_BUILD.engine.queue
+    local cursor = u32(rd(manager + q.head, 4) or '', 0)
+    local tail = u32(rd(manager + q.tail, 4) or '', 0)
+    if cursor and tail then
+        local guard = 0
+        while cursor ~= tail and guard < q.capacity do
+            local entry = rd(manager + q.entries + cursor * q.stride, q.stride)
+            if entry and entry:sub(1, 8) == wanted and entry:byte(q.load_flag + 1) ~= 0 then
+                return 'queued'
+            end
+            cursor = (cursor + 1) % q.capacity
+            guard = guard + 1
+        end
+    end
+    return 'absent'
+end
+-- Same shape the Runtime watch has: { status, tick(dt) }, polled by update().
+local function asset_watch_new(list)
+    if not asset_prove() then return nil end
+    local watch = { id = 'apw-lease', status = 'loading', packages = list, elapsed = 0 }
+    local asked = 0
+    for _, package in ipairs(list) do
+        local ok, err = pcall(asset_request, package.hex)
+        if ok then
+            asked = asked + 1
+        else
+            log('ASSET built-in request failed for ' .. tostring(package.name) .. ': ' .. tostring(err))
+        end
+    end
+    if asked == 0 then return nil end
+    watch.tick = function(self, dt)
+        self.elapsed = (self.elapsed or 0) + (dt or 0.016)
+        local pending = 0
+        for _, package in ipairs(self.packages) do
+            local st = asset_pkg_state(package.hex)
+            package.state = st
+            if st ~= 'resident' then pending = pending + 1 end
+        end
+        if pending == 0 then
+            self.status = 'complete'
+        elseif self.elapsed > 90 then
+            self.status = 'rejected'
+            self.error = 'ASSET_UNAVAILABLE: the engine did not finish loading the package within 90 s'
+        end
+    end
+    return watch
+end
+-- Runtime 0.40.1 and older own the request (their synced assets reach clients).
+-- Anything newer, or unknown, uses the built-in loader so the two never fight.
+local function asset_runtime_ok(hd2)
+    local major, minor, patch = tostring(hd2.version or ''):match('^(%d+)%.(%d+)%.(%d+)')
+    major, minor, patch = tonumber(major), tonumber(minor), tonumber(patch)
+    if not major then return false end
+    if major ~= 0 then return false end
+    if minor ~= 40 then return minor < 40 end
+    return patch <= 1
+end
 local ASSET_WEAPON = 'P-92 Warrant'
 -- v4.6: the bomblet can borrow a seeker that belongs to another weapon's
 -- package (1 = MLS-4X commando, 2 = Patriot exosuit, 3 = the missile silo).  If
@@ -1951,45 +2160,74 @@ local SEEKER_ASSET = {
 local function asset_start()
     if cfg.require_assets ~= 1 then return end
     local ok, hd2 = pcall(require, 'mods/skyeshade/hd2runtime')
-    if not ok or type(hd2) ~= 'table' or not hd2.require_assets then
-        log('ASSET the shared HD2Runtime is not installed - the leased projectile '
-            .. 'will keep showing the missing-material icon')
-        return
-    end
-    local ok2, watch = pcall(function()
-        local targets = { hd2.weapon(ASSET_WEAPON) }
-        -- v4.9: the bomblet and the rocket can borrow DIFFERENT entities now, so
-        -- both packages have to be resident or the one that is missing spawns
-        -- with no SeekingMissileComponent at all
-        local wanted = {}
-        local _, _, smode = cluster_seeker()
-        local _, _, lmode = launcher_seeker()
-        wanted[#wanted + 1] = { smode, 'bomblet' }
-        if lmode ~= smode then wanted[#wanted + 1] = { lmode, 'rocket' } end
-        for _, w2 in ipairs(wanted) do
-            local extra = SEEKER_ASSET[w2[1]]
-            if extra then
-                local okw, w = pcall(hd2[extra.kind], extra.name)
-                if okw and type(w) == 'table' then
-                    targets[#targets + 1] = w
-                    log(('ASSET also asking for the %s seeker package %s (%s)')
-                        :format(w2[2], extra.name, extra.kind))
-                else
-                    log(('ASSET the %s seeker package %s could not be resolved as a '
-                         .. '%s (%s) - only the P-92 one is loaded')
-                        :format(w2[2], extra.name, extra.kind, tostring(w)))
+    local use_runtime = ok and type(hd2) == 'table' and hd2.require_assets
+        and asset_runtime_ok(hd2)
+    -- v4.9: the bomblet and the rocket can borrow DIFFERENT entities now, so
+    -- both packages have to be resident or the one that is missing spawns
+    -- with no SeekingMissileComponent at all
+    local wanted = {}
+    local _, _, smode = cluster_seeker()
+    local _, _, lmode = launcher_seeker()
+    wanted[#wanted + 1] = { smode, 'bomblet' }
+    if lmode ~= smode then wanted[#wanted + 1] = { lmode, 'rocket' } end
+    if use_runtime then
+        local ok2, watch = pcall(function()
+            local targets = { hd2.weapon(ASSET_WEAPON) }
+            for _, w2 in ipairs(wanted) do
+                local extra = SEEKER_ASSET[w2[1]]
+                if extra then
+                    local okw, w = pcall(hd2[extra.kind], extra.name)
+                    if okw and type(w) == 'table' then
+                        targets[#targets + 1] = w
+                        log(('ASSET also asking for the %s seeker package %s (%s)')
+                            :format(w2[2], extra.name, extra.kind))
+                    else
+                        log(('ASSET the %s seeker package %s could not be resolved as a '
+                             .. '%s (%s) - only the P-92 one is loaded')
+                            :format(w2[2], extra.name, extra.kind, tostring(w)))
+                    end
                 end
             end
+            return hd2.require_assets({ id = 'apw-lease', targets = targets })
+        end)
+        if not ok2 or type(watch) ~= 'table' then
+            log('ASSET require_assets refused: ' .. tostring(watch))
+            return
         end
-        return hd2.require_assets({ id = 'apw-lease', targets = targets })
-    end)
-    if not ok2 or type(watch) ~= 'table' then
-        log('ASSET require_assets refused: ' .. tostring(watch))
+        state.asset_watch = watch
+        log(('ASSET asked HD2Runtime %s to load the package of %s (status=%s)')
+            :format(tostring(hd2.version), ASSET_WEAPON, tostring(watch.status)))
+        return
+    end
+    if ok and type(hd2) == 'table' and hd2.version then
+        log('ASSET HD2Runtime ' .. tostring(hd2.version) .. ' is outside the range this '
+            .. 'addon delegates to - the built-in loader is used instead')
+    else
+        log('ASSET HD2Runtime is not installed - the built-in loader is used instead')
+    end
+    local list, seen = { { name = ASSET_WEAPON, hex = ASSET_PACKAGE[ASSET_WEAPON] } }, {}
+    seen[ASSET_PACKAGE[ASSET_WEAPON]] = true
+    for _, w2 in ipairs(wanted) do
+        local extra = SEEKER_ASSET[w2[1]]
+        local hex = extra and ASSET_PACKAGE[extra.name]
+        if hex and not seen[hex] then
+            seen[hex] = true
+            list[#list + 1] = { name = extra.name, hex = hex }
+            log(('ASSET built-in loader also requests the %s seeker package %s')
+                :format(w2[2], extra.name))
+        elseif not hex then
+            log(('ASSET no built-in package id for the %s seeker - only the P-92 one is loaded')
+                :format(w2[2]))
+        end
+    end
+    local watch = asset_watch_new(list)
+    if not watch then
+        log('ASSET the leased projectile will keep showing the missing-material icon')
         return
     end
     state.asset_watch = watch
-    log(('ASSET asked the runtime to load the package of %s (status=%s)')
-        :format(ASSET_WEAPON, tostring(watch.status)))
+    log(('ASSET built-in loader asked for %d package(s) of %s (status=%s)')
+        :format(#list, ASSET_WEAPON, tostring(watch.status)))
 end
 
 local SEEK_LIST = {
@@ -5200,10 +5438,11 @@ local menu_step = (function()
           d_zh = '把租来的弹的伤害改回武器自己的数值。关闭则所有武器都用 P-92 法令'
               .. '的伤害。' },
         { k = 'require_assets', en = 'LOAD PROJECTILE MATERIALS', zh = '加载弹丸材质',
-          d_en = 'Ask the shared HD2Runtime to keep the leased projectile loaded, '
-              .. 'so it does not show the missing-material icon. Needs HD2Runtime.',
-          d_zh = '请共用的 HD2Runtime 让租来的弹丸保持加载，避免出现缺材质的紫问号。'
-              .. '需要安装 HD2Runtime。' },
+          d_en = 'Keep the leased projectile package loaded so it does not show '
+              .. 'the missing-material icon. HD2Runtime 0.40.1 or older is used '
+              .. 'when present; otherwise the built-in loader requests it.',
+          d_zh = '让租来的弹丸资源包保持加载，避免出现缺材质的紫问号。装了 '
+              .. 'HD2Runtime 0.40.1 或更旧版本时交给它，否则用内置装载器加载。' },
         { k = 'scope_fix', en = 'FOLLOW THE SCOPE ZOOM',
           zh = '开镜锁定范围跟随倍镜',
           d_en = 'OFF (shipped): the lock cone is compensated by the camera zoom, '

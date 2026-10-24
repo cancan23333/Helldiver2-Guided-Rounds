@@ -11,11 +11,26 @@ values**. It ships an aim-range ring, lock markers, a target box, and a full
 in-game **MODS** menu, all live-adjustable.
 
 - Authors: **cancan2333 & SoS2430**
-- Requires: **Bingus Shared Loader v15+**, **HD2Runtime 0.31.x**,
-  **Vanilla Plus Megapack** (it provides the in-game MODS menu)
+- Requires: **Bingus Shared Loader v15+**, **Vanilla Plus Megapack** (it provides
+  the in-game MODS menu). **HD2Runtime optional**: 0.40.1 or older takes over
+  package loading; otherwise the addon loads the packages itself
 - Source: `docs/guided_rounds.lua` · Build: `build.py`
 
 ---
+
+## What's new in v1.9.13
+
+**Projectile materials no longer require HD2Runtime.** The addon now loads the
+leased P-92 package (and the seeker packages it borrows) itself. If HD2Runtime
+0.40.1 or older is installed the request is still delegated to it, so its synced
+assets keep reaching clients; a newer runtime, or none, uses the built-in loader.
+
+- The built-in loader fingerprint-checks the game build, asks the game package
+  manager to load the packages, and polls until they are resident.
+- It fails closed: an unrecognised build writes one log line and leaves the old
+  missing-material behaviour untouched.
+- `LOAD PROJECTILE MATERIALS` now works with no runtime, with ≤0.40.1, and with a
+  newer runtime.
 
 ## What's new in v1.9.12
 
@@ -38,10 +53,11 @@ and v1.9.0 (category pages).
 ## Install
 
 1. Install the mod loader: [HD2 Arsenal](https://www.nexusmods.com/helldivers2/mods/4664).
-2. In HD2 Arsenal, import `Guided-Rounds-v1.9.12.zip` and make sure these are
+2. In HD2 Arsenal, import `Guided-Rounds-v1.9.13.zip` and make sure these are
    installed too:
    - [Bingus Shared Loader](https://ayakamods.com/mods/bingus-shared-loader.3861/)
-   - [hd2runtime](https://ayakamods.com/mods/hd2runtime.4260/)
+   - [hd2runtime](https://ayakamods.com/mods/hd2runtime.4260/) — optional: 0.40.1 and older
+     take over package loading, otherwise the addon loads packages itself
    - [Vanilla Plus Megapack](https://www.nexusmods.com/helldivers2/mods/16294) — required, it provides the MODS menu
 3. Load order, top to bottom (any other order and the addon does nothing):
 
@@ -53,8 +69,9 @@ and v1.9.0 (category pages).
    ```
 4. Launch the game. The menu is **Esc → MODS**, page `01 · GUIDED ROUNDS`.
 
-Without hd2runtime the leased projectile material does not load and rounds show
-up as a purple missing-material icon.
+The built-in loader requests the packages; the purple missing-material icon only
+remains when it does not recognise the game build and no HD2Runtime 0.40.1 or
+older is installed.
 
 ## Menu at a glance
 
@@ -104,12 +121,13 @@ python build.py
 ```
 
 Python 3 only, no game or SDK needed. Produces
-`Addon/9ba626afa44a3aa3.patch_0` and `Guided-Rounds-v1.9.12.zip`.
+`Addon/9ba626afa44a3aa3.patch_0` and `Guided-Rounds-v1.9.13.zip`.
 `--check-against` compares the output with BingusSharedLoader's reference
 packer.
 
 ## Version
 
+- **v1.9.13** — built-in projectile material loader; HD2Runtime optional (≤0.40.1 takes priority)
 - **v1.9.12** — Voteless lock fix (dead cache only trusts `status=2`), zero-bone guard, WATCH counters
 - **v1.9.11** — per-weapon priority reads the weapon in hand; CUSTOM also points the pages at that weapon; aim mode follows a weapon swap immediately; 0 = not set
 - **v1.9.0** — weapon pages by class, priority pages by faction, Cognitive Disruptor hull removed, bilingual names

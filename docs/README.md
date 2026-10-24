@@ -6,21 +6,22 @@ Guided Rounds 把 **P-92 法令**的制导行为装到武器清单里的每一�
 在瞄准锥里挑一个目标并追上去；**伤害、初速、弹道都还是武器自己的数值**。
 
 - 作者：cancan2333 & SoS2430
-- 版本：1.9.12
-- 需要：Bingus Shared Loader v15+、HD2Runtime 0.31.x、Vanilla Plus Megapack
+- 版本：1.9.13
+- 需要：Bingus Shared Loader v15+、Vanilla Plus Megapack；HD2Runtime 可选（0.40.1 及更旧版本会接管材质加载）
 - 源码：`docs/guided_rounds.lua` · 构建：`build.py`
 
 ## 安装
 
 1. 安装 [HD2 Arsenal](https://www.nexusmods.com/helldivers2/mods/4664) 加载器。
-2. 用 HD2 Arsenal 导入 `Guided-Rounds-v1.9.12.zip`，并装好
+2. 用 HD2 Arsenal 导入 `Guided-Rounds-v1.9.13.zip`，并装好
    [Bingus Shared Loader](https://ayakamods.com/mods/bingus-shared-loader.3861/)、
-   [hd2runtime](https://ayakamods.com/mods/hd2runtime.4260/)、
    [Vanilla Plus Megapack](https://www.nexusmods.com/helldivers2/mods/16294)。
-3. 加载顺序自上而下：**Guided Rounds → Vanilla Plus Megapack → Bingus Shared Loader → hd2runtime**。
+   [hd2runtime](https://ayakamods.com/mods/hd2runtime.4260/) 可选：0.40.1 及更旧版本会接管材质加载；
+   不装、或版本比 0.40.1 新，则由本 mod 内置装载器加载。
+3. 加载顺序自上而下：**Guided Rounds → Vanilla Plus Megapack → Bingus Shared Loader → hd2runtime**（没装 hd2runtime 就省掉最后一项）。
 4. 进游戏，**Esc → MODS** 打开设置。
 
-缺 hd2runtime 时弹丸材质加载不出来，会显示成紫色问号。
+材质由内置装载器加载；只有内置装载器不认识当前游戏 build、且没有 ≤0.40.1 的 HD2Runtime 时，才会显示成紫色问号。
 
 ## 菜单地图
 
@@ -100,7 +101,7 @@ Guided Rounds 把 **P-92 法令**的制导行为装到武器清单里的每一�
 | NEAREST ENEMY FALLBACK | `cone_fallback` | 0 | 锥内没人时改锁最近敌人 |
 | GUIDE RL-77 CLUSTER BOMBLETS | `cluster_guide` | 1 | 给 RL-77 子弹药装制导 |
 | KEEP THE WEAPON OWN DAMAGE | `apw_damage` | 1 | 保留武器自己的伤害 |
-| LOAD PROJECTILE MATERIALS | `require_assets` | 1 | 保持弹丸材质加载（需 hd2runtime） |
+| LOAD PROJECTILE MATERIALS | `require_assets` | 1 | 保持弹丸材质加载（内置装载器；≤0.40.1 的 HD2Runtime 优先） |
 | FOLLOW THE SCOPE ZOOM | `scope_fix` | 0 | 开镜锁定范围随倍镜放大 |
 | ENABLE | `enable` | 1 | 总开关（F7 重启同一开关） |
 
@@ -184,7 +185,7 @@ Guided Rounds 把 **P-92 法令**的制导行为装到武器清单里的每一�
 
 ## 排查
 
-**一把枪都不锁**：确认 `enable=1`、按过 F7、加载顺序对、hd2runtime 在装；
+**一把枪都不锁**：确认 `enable=1`、按过 F7、加载顺序对、没有关掉 `require_assets`；
 再看 `cone_deg` / `max_dist` / `los_check` 是否把目标筛掉。
 
 **个别单位锁不上**（v1.9.12 修的就是这类）：开 `debug=1` 打一场，看日志里的
@@ -204,7 +205,7 @@ WATCH <名字> seen=.. wanted=.. health=.. dead=.. status=.. faction=.. pose=.. 
 `status=1`；旧规则把任意 `status≠0` 当死亡，把整个 unit 踢出候选 3600 帧并反复
 复发。现在只认 `status=2`，且部件行不会牵连身体。
 
-**弹丸是紫色问号**：没装 hd2runtime，或 `require_assets=0`。
+**弹丸是紫色问号**：`require_assets=0`，或内置装载器不认识当前游戏 build、且没装 ≤0.40.1 的 HD2Runtime。
 
 **圆环大小不对**：`scope_fix=0` 时任何倍率下圆环屏幕大小一致；打开后按
 `scope_scale` 缩放。
@@ -216,7 +217,7 @@ python build.py              # 生成 Addon 与 zip
 python build.py --check-against "../BingusSharedLoader-source-v19"
 ```
 
-打包结果：`Addon/9ba626afa44a3aa3.patch_0`、`Guided-Rounds-v1.9.12.zip`。
+打包结果：`Addon/9ba626afa44a3aa3.patch_0`、`Guided-Rounds-v1.9.13.zip`。
 `tools/` 里是只读检查脚本（语法、全局变量、局部变量、包结构、持久化），
 `tools/README.md` 有各自路径要求。
 
@@ -224,6 +225,7 @@ python build.py --check-against "../BingusSharedLoader-source-v19"
 
 | 版本 | 内容 |
 | --- | --- |
+| v1.9.13 | 弹丸材质内置：不再强制 HD2Runtime；≤0.40.1 时交给它（队友同步），更新版本或未安装时用内置装载器 |
 | v1.9.12 | 无票者锁不上：死亡缓存只认 `status=2`；全零骨骼视为读不到；WATCH 增加 `dead=`/`status=` |
 | v1.9.11 | 单枪优先级改用准心指向的武器；`CUSTOM` 也指向该枪并关 `glob_edit`；换枪后瞄准模式即时；`0 = 未设置` |
 | v1.9.10 | 优先级编辑目标跨菜单保持，12 页三态 |
