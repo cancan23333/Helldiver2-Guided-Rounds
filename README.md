@@ -12,25 +12,26 @@ in-game **MODS** menu, all live-adjustable.
 
 - Authors: **cancan2333 & SoS2430**
 - Requires: **Bingus Shared Loader v15+**, **Vanilla Plus Megapack** (it provides
-  the in-game MODS menu). **HD2Runtime optional**: 0.40.1 or older takes over
-  package loading; otherwise the addon loads the packages itself
+  the in-game MODS menu). **HD2Runtime optional**: when installed, it is preferred
+  (its asset sync reaches clients without the loadout); otherwise the built-in
+  loader requests the packages
 - Source: `docs/guided_rounds.lua` · Build: `build.py`
 
 ---
 
-## What's new in v1.9.13
+## What's new in v1.9.14
 
-**Projectile materials no longer require HD2Runtime.** The addon now loads the
-leased P-92 package (and the seeker packages it borrows) itself. If HD2Runtime
-0.40.1 or older is installed the request is still delegated to it, so its synced
-assets keep reaching clients; a newer runtime, or none, uses the built-in loader.
+**Fixed: clients could see a pink question mark for your rounds.** The v1.9.13
+built-in loader probed the game's package system during startup, and one failed
+probe disabled it for the rest of the session - the packages were never
+requested. The loader now waits for the game, proves the build, and retries
+transient boot failures.
 
-- The built-in loader fingerprint-checks the game build, asks the game package
-  manager to load the packages, and polls until they are resident.
-- It fails closed: an unrecognised build writes one log line and leaves the old
-  missing-material behaviour untouched.
-- `LOAD PROJECTILE MATERIALS` now works with no runtime, with ≤0.40.1, and with a
-  newer runtime.
+- An installed HD2Runtime is preferred when it accepts the request (its SYNCED
+  ASSETS are what reaches clients without the loadout); the built-in loader is
+  the fallback.
+- `LOAD PROJECTILE MATERIALS` works with no runtime at all.
+- Unrecognised game builds still fail closed with one log line.
 
 ## What's new in v1.9.12
 
@@ -53,11 +54,11 @@ and v1.9.0 (category pages).
 ## Install
 
 1. Install the mod loader: [HD2 Arsenal](https://www.nexusmods.com/helldivers2/mods/4664).
-2. In HD2 Arsenal, import `Guided-Rounds-v1.9.13.zip` and make sure these are
+2. In HD2 Arsenal, import `Guided-Rounds-v1.9.14.zip` and make sure these are
    installed too:
    - [Bingus Shared Loader](https://ayakamods.com/mods/bingus-shared-loader.3861/)
-   - [hd2runtime](https://ayakamods.com/mods/hd2runtime.4260/) — optional: 0.40.1 and older
-     take over package loading, otherwise the addon loads packages itself
+   - [hd2runtime](https://ayakamods.com/mods/hd2runtime.4260/) — optional: preferred when
+     installed (it also syncs the packages to clients), otherwise the addon loads them itself
    - [Vanilla Plus Megapack](https://www.nexusmods.com/helldivers2/mods/16294) — required, it provides the MODS menu
 3. Load order, top to bottom (any other order and the addon does nothing):
 
@@ -69,9 +70,9 @@ and v1.9.0 (category pages).
    ```
 4. Launch the game. The menu is **Esc → MODS**, page `01 · GUIDED ROUNDS`.
 
-The built-in loader requests the packages; the purple missing-material icon only
-remains when it does not recognise the game build and no HD2Runtime 0.40.1 or
-older is installed.
+The packages are requested by an installed HD2Runtime or by the built-in loader;
+the purple missing-material icon only remains when neither can load them (missing
+runtime and an unrecognised game build).
 
 ## Menu at a glance
 
@@ -121,13 +122,13 @@ python build.py
 ```
 
 Python 3 only, no game or SDK needed. Produces
-`Addon/9ba626afa44a3aa3.patch_0` and `Guided-Rounds-v1.9.13.zip`.
+`Addon/9ba626afa44a3aa3.patch_0` and `Guided-Rounds-v1.9.14.zip`.
 `--check-against` compares the output with BingusSharedLoader's reference
 packer.
 
 ## Version
 
-- **v1.9.13** — built-in projectile material loader; HD2Runtime optional (≤0.40.1 takes priority)
+- **v1.9.14** — fixes the pink question mark clients saw with v1.9.13 (the built-in loader now waits for the game); HD2Runtime preferred, built-in fallback
 - **v1.9.12** — Voteless lock fix (dead cache only trusts `status=2`), zero-bone guard, WATCH counters
 - **v1.9.11** — per-weapon priority reads the weapon in hand; CUSTOM also points the pages at that weapon; aim mode follows a weapon swap immediately; 0 = not set
 - **v1.9.0** — weapon pages by class, priority pages by faction, Cognitive Disruptor hull removed, bilingual names

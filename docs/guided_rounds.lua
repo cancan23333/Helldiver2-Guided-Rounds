@@ -1,6 +1,6 @@
 -- HD2-Addon: mods/cancan2333/guided_rounds
 -- Author: cancan2333 & SoS2430
--- Mod: Guided Rounds v1.9.13
+-- Mod: Guided Rounds v1.9.14
 -- zh: TARGET PRIORITY 的单位名用资源表中文名显示（英文名仍用于排序/过滤）。
 --
 -- WHAT v1.9.8 DOES - DEATH COMES FROM THE GAME, NOT FROM hp > 0
@@ -342,7 +342,7 @@
 -- ===================================================================
 
 local KEY = 'Hd2ApwGuidance3'
-local REVISION = 'guided-rounds-v1.9.13'
+local REVISION = 'guided-rounds-v1.9.14'
 if rawget(_G, KEY) then return end
 local state = { frame = 0, writes = 0, binds = 0, armed = false, leased = false, failures = 0,
                 sh_note = {} }
@@ -1927,7 +1927,7 @@ local WATCH = {
 -- Seeker entities we can lease instead of the P-92 one.  turn = the max turn
 -- speed inside that entity's SeekingMissileComponentData, so swapping changes
 -- both the look and how hard the round can turn.  Cycled live with seek_key.
--- v1.9.13: built-in package loader -------------------------------------------
+-- v1.9.14: built-in package loader -------------------------------------------
 -- HD2Runtime 0.40.1 and older keep requesting the packages (its synced assets
 -- also reach clients). Without Runtime, or with a newer one, the same native
 -- reference the game takes when a player carries the item is requested here:
@@ -2000,47 +2000,72 @@ local function asset_id(hex)
     return table.concat(out)
 end
 local function asset_fail(why)
-    if not state.asset_why then
-        state.asset_why = why
+    -- Hard failure only: this binary is not one the table above was proven on.
+    if not state.asset_hard then
+        state.asset_hard = why
         log('ASSET built-in loader unavailable: ' .. why)
     end
 end
 local function asset_prove()
     if state.asset_pins then return state.asset_pins end
-    if state.asset_why then return nil end
-    if not base or not exe_base then asset_fail('game modules are not mapped yet') return nil end
-    local function ok(addr, proof)
+    if state.asset_hard then return nil, state.asset_hard end
+    if not base or not exe_base then
+        return nil, 'the game modules are not mapped yet'
+    end
+    local function matches(addr, proof)
         local want = asset_unhex(proof)
-        return rd(addr, #want) == want
+        local got = rd(addr, #want)
+        if not got or #got ~= #want then return nil end
+        return got == want
     end
-    if not ok(base + ASSET_BUILD.request.rva, ASSET_BUILD.request.proof) then
-        asset_fail('game.dll does not match the proven package request function') return nil
+    -- nil means the bytes are not readable (the module can still be mapping);
+    -- false means they are readable and belong to a different build.
+    local request = matches(base + ASSET_BUILD.request.rva, ASSET_BUILD.request.proof)
+    if request == nil then return nil, 'the game modules are not readable yet' end
+    if not request then
+        asset_fail('game.dll is not the build whose package request function was proven')
+        return nil, state.asset_hard
     end
-    if not ok(base + ASSET_BUILD.release.rva, ASSET_BUILD.release.proof) then
-        asset_fail('game.dll does not match the proven package release function') return nil
+    local release = matches(base + ASSET_BUILD.release.rva, ASSET_BUILD.release.proof)
+    if release == nil then return nil, 'the game modules are not readable yet' end
+    if not release then
+        asset_fail('game.dll is not the build whose package release function was proven')
+        return nil, state.asset_hard
     end
-    if not ok(exe_base + ASSET_BUILD.has_loaded.rva, ASSET_BUILD.has_loaded.proof) then
-        asset_fail('exe does not match the proven package has_loaded function') return nil
+    local has_loaded = matches(exe_base + ASSET_BUILD.has_loaded.rva, ASSET_BUILD.has_loaded.proof)
+    if has_loaded == nil then return nil, 'the game modules are not readable yet' end
+    if not has_loaded then
+        asset_fail('the executable is not the build whose has_loaded function was proven')
+        return nil, state.asset_hard
     end
-    if not ok(exe_base + ASSET_BUILD.find_package.rva, ASSET_BUILD.find_package.proof) then
-        asset_fail('exe does not match the proven package lookup function') return nil
+    local find_package = matches(exe_base + ASSET_BUILD.find_package.rva, ASSET_BUILD.find_package.proof)
+    if find_package == nil then return nil, 'the game modules are not readable yet' end
+    if not find_package then
+        asset_fail('the executable is not the build whose package lookup was proven')
+        return nil, state.asset_hard
     end
     -- The global holds a pointer to the system; its first 32 bytes are the
-    -- reference map (capacity even, allocated entries non-zero).
+    -- reference map (capacity even, allocated entries non-zero).  The game
+    -- allocates that map while it starts, so an empty one here is retried by
+    -- the watch: failing once at load time used to disable the loader for the
+    -- whole session.
     local inst = ptr8(base + ASSET_BUILD.instance)
-    local hdr = inst and rd(inst, 32)
+    if not ptr_ok(inst) then return nil, 'the package system is not initialised yet' end
+    local hdr = rd(inst, 32)
     local capacity = hdr and u32(hdr, ASSET_BUILD.map.capacity)
     local entries = hdr and u32(hdr, ASSET_BUILD.map.entries)
-    if not ptr_ok(inst) or not capacity or capacity < 16 or capacity > 65536
-        or capacity % 2 ~= 0 or not entries or entries == 0 then
-        asset_fail('package reference map shape changed') return nil
+    if not capacity or capacity < 16 or capacity > 65536 or capacity % 2 ~= 0
+        or not entries or entries == 0 then
+        return nil, 'the package system is not initialised yet'
     end
     state.asset_pins = { instance = inst, request = base + ASSET_BUILD.request.rva }
+    log('ASSET built-in loader: this game build is the proven one (map capacity '
+        .. tostring(capacity) .. ')')
     return state.asset_pins
 end
 local function asset_request(hex)
     local pins = asset_prove()
-    if not pins then return nil, state.asset_why or 'not proven' end
+    if not pins then error(state.asset_hard or 'the package system is not ready', 0) end
     local ids = ffi.new('uint64_t[1]')
     ffi.copy(ids, asset_id(hex), 8)
     local request = ffi.cast('void (*)(void *, const uint64_t *, uint32_t)', pins.request)
@@ -2096,46 +2121,64 @@ local function asset_pkg_state(hex)
     return 'absent'
 end
 -- Same shape the Runtime watch has: { status, tick(dt) }, polled by update().
-local function asset_watch_new(list)
-    if not asset_prove() then return nil end
-    local watch = { id = 'apw-lease', status = 'loading', packages = list, elapsed = 0 }
+-- Nothing is requested until the first tick: the game allocates its package
+-- reference map while it starts, and a loader that gave up at load time was
+-- the reason a whole lobby could keep the missing-material icon.
+local ASSET_BOOT_WAIT = 25
+local function asset_watch_new(list, source)
+    local watch = { id = 'apw-lease', status = 'loading', packages = list,
+        elapsed = 0, source = source or 'builtin' }
     local asked = 0
-    for _, package in ipairs(list) do
-        local ok, err = pcall(asset_request, package.hex)
-        if ok then
-            asked = asked + 1
-        else
-            log('ASSET built-in request failed for ' .. tostring(package.name) .. ': ' .. tostring(err))
-        end
-    end
-    if asked == 0 then return nil end
     watch.tick = function(self, dt)
         self.elapsed = (self.elapsed or 0) + (dt or 0.016)
-        local pending = 0
+        if not self.asked then
+            local pins, why = asset_prove()
+            if not pins then
+                if self.elapsed > ASSET_BOOT_WAIT then
+                    self.status = 'rejected'
+                    self.error = 'the built-in package loader is not ready: ' .. tostring(why)
+                end
+                return
+            end
+            for _, package in ipairs(self.packages) do
+                local ok, err = pcall(asset_request, package.hex)
+                if ok then
+                    asked = asked + 1
+                else
+                    log('ASSET built-in request failed for ' .. tostring(package.name)
+                        .. ': ' .. tostring(err))
+                end
+            end
+            if asked == 0 then
+                self.status = 'rejected'
+                self.error = 'no package request could be made'
+                return
+            end
+            self.asked = asked
+            log(('ASSET built-in loader asked for %d package(s)'):format(asked))
+            for _, package in ipairs(self.packages) do
+                log('   ASSET package ' .. tostring(package.name) .. ' ' .. tostring(package.hex))
+            end
+        end
+        local pending, states = 0, {}
         for _, package in ipairs(self.packages) do
             local st = asset_pkg_state(package.hex)
             package.state = st
+            states[#states + 1] = tostring(package.name) .. '=' .. tostring(st)
             if st ~= 'resident' then pending = pending + 1 end
         end
         if pending == 0 then
             self.status = 'complete'
         elseif self.elapsed > 90 then
             self.status = 'rejected'
-            self.error = 'ASSET_UNAVAILABLE: the engine did not finish loading the package within 90 s'
+            self.error = 'the engine did not finish loading the package within 90 s ('
+                .. table.concat(states, ', ') .. ')'
         end
     end
     return watch
 end
 -- Runtime 0.40.1 and older own the request (their synced assets reach clients).
 -- Anything newer, or unknown, uses the built-in loader so the two never fight.
-local function asset_runtime_ok(hd2)
-    local major, minor, patch = tostring(hd2.version or ''):match('^(%d+)%.(%d+)%.(%d+)')
-    major, minor, patch = tonumber(major), tonumber(minor), tonumber(patch)
-    if not major then return false end
-    if major ~= 0 then return false end
-    if minor ~= 40 then return minor < 40 end
-    return patch <= 1
-end
 local ASSET_WEAPON = 'P-92 Warrant'
 -- v4.6: the bomblet can borrow a seeker that belongs to another weapon's
 -- package (1 = MLS-4X commando, 2 = Patriot exosuit, 3 = the missile silo).  If
@@ -2159,9 +2202,6 @@ local SEEKER_ASSET = {
 }
 local function asset_start()
     if cfg.require_assets ~= 1 then return end
-    local ok, hd2 = pcall(require, 'mods/skyeshade/hd2runtime')
-    local use_runtime = ok and type(hd2) == 'table' and hd2.require_assets
-        and asset_runtime_ok(hd2)
     -- v4.9: the bomblet and the rocket can borrow DIFFERENT entities now, so
     -- both packages have to be resident or the one that is missing spawns
     -- with no SeekingMissileComponent at all
@@ -2170,7 +2210,26 @@ local function asset_start()
     local _, _, lmode = launcher_seeker()
     wanted[#wanted + 1] = { smode, 'bomblet' }
     if lmode ~= smode then wanted[#wanted + 1] = { lmode, 'rocket' } end
-    if use_runtime then
+    local list, seen = { { name = ASSET_WEAPON, hex = ASSET_PACKAGE[ASSET_WEAPON] } }, {}
+    seen[ASSET_PACKAGE[ASSET_WEAPON]] = true
+    for _, w2 in ipairs(wanted) do
+        local extra = SEEKER_ASSET[w2[1]]
+        local hex = extra and ASSET_PACKAGE[extra.name]
+        if hex and not seen[hex] then
+            seen[hex] = true
+            list[#list + 1] = { name = extra.name, hex = hex }
+        elseif not hex then
+            log(('ASSET no package id for the %s seeker - only the P-92 one is requested')
+                :format(w2[2]))
+        end
+    end
+    state.asset_fallback = list
+    -- Prefer an installed Runtime even when it is newer than the version this
+    -- addon used to delegate to: 0.50.x speaks the same asset API, and its
+    -- SYNCED ASSETS is what makes a client WITHOUT the loadout see the round.
+    -- The built-in loader is the fallback if the Runtime refuses the request.
+    local ok, hd2 = pcall(require, 'mods/skyeshade/hd2runtime')
+    if ok and type(hd2) == 'table' and hd2.require_assets then
         local ok2, watch = pcall(function()
             local targets = { hd2.weapon(ASSET_WEAPON) }
             for _, w2 in ipairs(wanted) do
@@ -2190,44 +2249,18 @@ local function asset_start()
             end
             return hd2.require_assets({ id = 'apw-lease', targets = targets })
         end)
-        if not ok2 or type(watch) ~= 'table' then
-            log('ASSET require_assets refused: ' .. tostring(watch))
+        if ok2 and type(watch) == 'table' then
+            watch.source = 'runtime'
+            state.asset_watch = watch
+            log(('ASSET asked HD2Runtime %s to load the package of %s (status=%s)')
+                :format(tostring(hd2.version), ASSET_WEAPON, tostring(watch.status)))
             return
         end
-        state.asset_watch = watch
-        log(('ASSET asked HD2Runtime %s to load the package of %s (status=%s)')
-            :format(tostring(hd2.version), ASSET_WEAPON, tostring(watch.status)))
-        return
-    end
-    if ok and type(hd2) == 'table' and hd2.version then
-        log('ASSET HD2Runtime ' .. tostring(hd2.version) .. ' is outside the range this '
-            .. 'addon delegates to - the built-in loader is used instead')
+        log('ASSET HD2Runtime refused the package request: ' .. tostring(watch))
     else
-        log('ASSET HD2Runtime is not installed - the built-in loader is used instead')
+        log('ASSET HD2Runtime is not installed - the built-in loader is used')
     end
-    local list, seen = { { name = ASSET_WEAPON, hex = ASSET_PACKAGE[ASSET_WEAPON] } }, {}
-    seen[ASSET_PACKAGE[ASSET_WEAPON]] = true
-    for _, w2 in ipairs(wanted) do
-        local extra = SEEKER_ASSET[w2[1]]
-        local hex = extra and ASSET_PACKAGE[extra.name]
-        if hex and not seen[hex] then
-            seen[hex] = true
-            list[#list + 1] = { name = extra.name, hex = hex }
-            log(('ASSET built-in loader also requests the %s seeker package %s')
-                :format(w2[2], extra.name))
-        elseif not hex then
-            log(('ASSET no built-in package id for the %s seeker - only the P-92 one is loaded')
-                :format(w2[2]))
-        end
-    end
-    local watch = asset_watch_new(list)
-    if not watch then
-        log('ASSET the leased projectile will keep showing the missing-material icon')
-        return
-    end
-    state.asset_watch = watch
-    log(('ASSET built-in loader asked for %d package(s) of %s (status=%s)')
-        :format(#list, ASSET_WEAPON, tostring(watch.status)))
+    state.asset_watch = asset_watch_new(list)
 end
 
 local SEEK_LIST = {
@@ -5439,10 +5472,12 @@ local menu_step = (function()
               .. '的伤害。' },
         { k = 'require_assets', en = 'LOAD PROJECTILE MATERIALS', zh = '加载弹丸材质',
           d_en = 'Keep the leased projectile package loaded so it does not show '
-              .. 'the missing-material icon. HD2Runtime 0.40.1 or older is used '
-              .. 'when present; otherwise the built-in loader requests it.',
+              .. 'the missing-material icon. An installed HD2Runtime is used (its '
+              .. 'synced assets also cover clients without the loadout); otherwise '
+              .. 'the built-in loader requests the package.',
           d_zh = '让租来的弹丸资源包保持加载，避免出现缺材质的紫问号。装了 '
-              .. 'HD2Runtime 0.40.1 或更旧版本时交给它，否则用内置装载器加载。' },
+              .. 'HD2Runtime 就交给它（它的大厅同步还能让没装包的队友也看到）；'
+              .. '没装就用内置装载器请求。' },
         { k = 'scope_fix', en = 'FOLLOW THE SCOPE ZOOM',
           zh = '开镜锁定范围跟随倍镜',
           d_en = 'OFF (shipped): the lock cone is compensated by the camera zoom, '
@@ -7407,13 +7442,27 @@ local my_update = function(...)
     end
     if state.asset_watch and state.asset_watch.tick then
         local aw = state.asset_watch
-        pcall(aw.tick, aw, 0.016)
+        -- Give the game time to finish starting before touching its package
+        -- system: the instance and its reference map are allocated during
+        -- boot, and a probe that fails in that window is not a build mismatch.
+        aw.age = (aw.age or 0) + 0.016
+        if aw.age > 20 then
+            pcall(aw.tick, aw, 0.016)
+        end
         if aw.status == 'complete' then
             state.asset_watch = nil
             log('ASSET resident - the leased projectile has its material now')
         elseif aw.status == 'rejected' then
             state.asset_watch = nil
-            log('ASSET rejected: ' .. tostring(aw.error))
+            log('ASSET rejected (' .. tostring(aw.source) .. '): ' .. tostring(aw.error))
+            -- A Runtime that refused the request is not the end: the same
+            -- packages can still be asked for through the built-in loader.
+            if aw.source == 'runtime' and state.asset_fallback and not state.asset_hard then
+                local fallback = asset_watch_new(state.asset_fallback)
+                state.asset_fallback = nil
+                state.asset_watch = fallback
+                log('ASSET falling back to the built-in loader for the same packages')
+            end
         elseif aw.status == 'cancelled' then
             state.asset_watch = nil
         end

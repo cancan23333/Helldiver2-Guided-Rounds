@@ -10,21 +10,22 @@
 
 - 作者：**cancan2333 & SoS2430**
 - 需要：**Bingus Shared Loader v15+**、**Vanilla Plus Megapack**（游戏内 MODS
-  菜单由它提供）。**HD2Runtime 可选**：0.40.1 及更旧版本会接管材质加载，否则由
-  本 mod 自己加载资源包
+  菜单由它提供）。**HD2Runtime 可选**：装了优先交给它（它的资源同步能让没装包的
+  队友也看到弹丸）；没装或拒收时由内置装载器请求资源包
 - 源码：`docs/guided_rounds.lua` · 构建：`build.py`
 
 ---
 
-## v1.9.13 更新
+## v1.9.14 更新
 
-**弹丸材质不再强制依赖 HD2Runtime。** 本 mod 现在自己加载租来的 P-92 资源包（以及
-子弹药借用的追踪包）。装了 HD2Runtime 0.40.1 或更旧版本时，请求仍然交给它，
-让它的同步资源继续送到队友端；版本更新、或者根本没装，则走内置装载器。
+**修好：组队时队友会看到你的弹丸变成粉色问号。** v1.9.13 的内置装载器在游戏还在
+启动时就去探测资源包系统，一次失败就被记成永久失败，整局都不会再请求资源包。
+现在它会等游戏起来、确认 build，再请求；启动期的瞬时失败会重试。
 
-- 内置装载器先用字节指纹确认游戏 build，再请游戏自己的资源包管理器加载，轮询到驻留为止。
-- 失败即关闭：不认识的 build 只写一行日志，保持原来「缺材质问号」的行为，不乱写内存。
-- 「加载弹丸材质」开关在三种情况下都有效：没装 runtime、≤0.40.1、以及更新版本。
+- 装了 HD2Runtime 且它接受请求时优先交给它——它的 SYNCED ASSETS 才是让没装包的
+  队友也看到弹丸的关键；拒收时自动回退内置装载器。
+- 完全不装 runtime 时，「加载弹丸材质」照样工作。
+- 不认识的游戏 build 仍然只写一行日志、安静关闭，不乱写内存。
 
 ## v1.9.12 更新
 
@@ -42,10 +43,10 @@ v1.9.11（单枪优先级）与 v1.9.0（分类页）见[版本历史](docs/READ
 ## 安装
 
 1. 先装 mod 加载器：[HD2 Arsenal](https://www.nexusmods.com/helldivers2/mods/4664)。
-2. 在 HD2 Arsenal 里导入 `Guided-Rounds-v1.9.13.zip`，并确认下面几个也装好：
+2. 在 HD2 Arsenal 里导入 `Guided-Rounds-v1.9.14.zip`，并确认下面几个也装好：
    - [Bingus Shared Loader](https://ayakamods.com/mods/bingus-shared-loader.3861/)
-   - [hd2runtime](https://ayakamods.com/mods/hd2runtime.4260/) —— 可选：0.40.1 及更旧版本会接管
-     材质加载，否则由本 mod 自己加载
+   - [hd2runtime](https://ayakamods.com/mods/hd2runtime.4260/) —— 可选：装了优先交给它
+     （它也会把包同步给队友），否则由本 mod 自己加载
    - [Vanilla Plus Megapack](https://www.nexusmods.com/helldivers2/mods/16294) —— 必需，游戏内 MODS 菜单就是它提供的
 3. 加载顺序，自上而下（换成别的顺序会不生效）：
 
@@ -57,8 +58,8 @@ v1.9.11（单枪优先级）与 v1.9.0（分类页）见[版本历史](docs/READ
    ```
 4. 进游戏。设置菜单在 **Esc → MODS**，第一页 `01 · GUIDED ROUNDS`。
 
-材质由内置装载器加载；只有内置装载器不认识当前游戏 build、且没装 0.40.1 或更旧的
-HD2Runtime 时，弹丸才会显示成紫色缺材质图标。
+资源包由 HD2Runtime 或内置装载器请求；只有两者都加载不了（没装 runtime 且不认识当前
+游戏 build）时，弹丸才会显示成紫色缺材质图标。
 
 ## 菜单一览
 
@@ -105,12 +106,12 @@ python build.py
 ```
 
 只依赖 Python 3，不需要游戏或 SDK。输出
-`Addon/9ba626afa44a3aa3.patch_0` 与 `Guided-Rounds-v1.9.13.zip`。
+`Addon/9ba626afa44a3aa3.patch_0` 与 `Guided-Rounds-v1.9.14.zip`。
 `--check-against` 可对照 BingusSharedLoader 的参考打包器。
 
 ## 版本
 
-- **v1.9.13** —— 弹丸材质内置加载；HD2Runtime 变为可选（≤0.40.1 优先接管）
+- **v1.9.14** —— 修好 v1.9.13 组队时队友看到的粉色问号（内置装载器等游戏启动后再请求）；HD2Runtime 优先、内置回退
 - **v1.9.12** —— 无票者锁不上：死亡缓存只认 `status=2`、全零骨骼视为读不到、WATCH 增加计数
 - **v1.9.11** —— 单枪优先级按手上的枪取表；选「自定义」也会把优先级页指向该枪；换枪后瞄准模式即时切换；0 = 未设置
 - **v1.9.0** —— 武器按类型分页、优先级按阵营分页、移除认知干扰器本体、中英双语单位名

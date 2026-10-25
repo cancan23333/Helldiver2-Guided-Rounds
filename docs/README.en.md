@@ -8,25 +8,25 @@ steers onto it — **damage, muzzle velocity and ballistics remain the weapon's
 own values**.
 
 - Authors: cancan2333 & SoS2430
-- Version: 1.9.13
-- Requires: Bingus Shared Loader v15+, Vanilla Plus Megapack. **HD2Runtime optional**
-  (0.40.1 and older take over package loading)
+- Version: 1.9.14
+- Requires: Bingus Shared Loader v15+, Vanilla Plus Megapack. **HD2Runtime optional** (an installed one is preferred - its asset sync reaches clients without the loadout; the built-in loader takes over if it refuses)
 - Source: `docs/guided_rounds.lua` · Build: `build.py`
 
 ## Install
 
 1. Install the [HD2 Arsenal](https://www.nexusmods.com/helldivers2/mods/4664) loader.
-2. Import `Guided-Rounds-v1.9.13.zip` in HD2 Arsenal, and install
+2. Import `Guided-Rounds-v1.9.14.zip` in HD2 Arsenal, and install
    [Bingus Shared Loader](https://ayakamods.com/mods/bingus-shared-loader.3861/),
    [Vanilla Plus Megapack](https://www.nexusmods.com/helldivers2/mods/16294).
-   [hd2runtime](https://ayakamods.com/mods/hd2runtime.4260/) is optional: 0.40.1 and older
-   take over package loading; without it, or with a newer version, the built-in loader runs.
+   [hd2runtime](https://ayakamods.com/mods/hd2runtime.4260/) is optional: an installed one
+   is preferred (its lobby sync also reaches clients without the loadout); without it, or
+   if it refuses, the built-in loader runs.
 3. Load order, top to bottom: **Guided Rounds → Vanilla Plus Megapack → Bingus Shared Loader → hd2runtime** (drop the last line if hd2runtime is not installed).
 4. Launch the game and open **Esc → MODS**.
 
 The built-in loader requests the packages; the purple missing-material icon only
 remains when the built-in loader does not recognise the game build and no
-HD2Runtime 0.40.1 or older is installed.
+a usable HD2Runtime is installed.
 
 ## Menu map
 
@@ -112,7 +112,7 @@ also accepts 8 = P-33 round, 9 = FAF-14 Spear.
 | NEAREST ENEMY FALLBACK | `cone_fallback` | 0 | With an empty cone, take the nearest enemy |
 | GUIDE RL-77 CLUSTER BOMBLETS | `cluster_guide` | 1 | Guide the RL-77 bomblets |
 | KEEP THE WEAPON OWN DAMAGE | `apw_damage` | 1 | Restore the weapon's own damage |
-| LOAD PROJECTILE MATERIALS | `require_assets` | 1 | Keep the projectile material loaded (built-in loader; HD2Runtime ≤0.40.1 takes priority) |
+| LOAD PROJECTILE MATERIALS | `require_assets` | 1 | Keep the projectile material loaded (HD2Runtime preferred when installed, built-in loader otherwise) |
 | FOLLOW THE SCOPE ZOOM | `scope_fix` | 0 | Lock range follows scope magnification |
 | ENABLE | `enable` | 1 | Master switch (F7 restarts it) |
 
@@ -232,7 +232,7 @@ old rule treated any non-zero status as death and dropped the whole unit for
 row can no longer condemn the body.
 
 **Rounds are purple question marks**: `require_assets=0`, or the built-in loader does
-not recognise this game build while no HD2Runtime 0.40.1 or older is installed, or
+not recognise this game build while no usable HD2Runtime is installed, or
 `require_assets=0`.
 
 **Ring size looks wrong**: with `scope_fix=0` the ring keeps the same screen size
@@ -245,7 +245,7 @@ python build.py              # Addon + zip
 python build.py --check-against "../BingusSharedLoader-source-v19"
 ```
 
-Outputs `Addon/9ba626afa44a3aa3.patch_0` and `Guided-Rounds-v1.9.13.zip`.
+Outputs `Addon/9ba626afa44a3aa3.patch_0` and `Guided-Rounds-v1.9.14.zip`.
 `tools/` holds read-only checkers (syntax, globals, locals, package layout,
 persistence); see `tools/README.md` for their path requirements.
 
@@ -253,7 +253,7 @@ persistence); see `tools/README.md` for their path requirements.
 
 | Version | Change |
 | --- | --- |
-| v1.9.13 | Built-in projectile material loading: no mandatory HD2Runtime; 0.40.1 or older still handles it (client sync), newer or none uses the built-in loader |
+| v1.9.14 | Fixes the pink question mark clients saw with v1.9.13: the built-in loader waits for the game to start before proving/requesting, boot-time failures no longer disable it for the session; an installed HD2Runtime is preferred and the built-in loader is the fallback |
 | v1.9.12 | Voteless lock fix: dead cache only trusts `status=2`; zero bone treated as unreadable; WATCH gains `dead=`/`status=` |
 | v1.9.11 | Per-weapon priority reads the weapon the crosshair points at; `CUSTOM` also points the pages at it and clears `glob_edit`; aim mode follows a weapon swap at once; `0 = not set` |
 | v1.9.10 | Priority edit target survives menu closes; page 12 is three-state |
