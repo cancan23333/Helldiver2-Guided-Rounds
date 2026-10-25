@@ -1,6 +1,6 @@
 -- HD2-Addon: mods/cancan2333/guided_rounds
 -- Author: cancan2333 & SoS2430
--- Mod: Guided Rounds v1.9.14
+-- Mod: Guided Rounds v1.9.15
 -- zh: TARGET PRIORITY 的单位名用资源表中文名显示（英文名仍用于排序/过滤）。
 --
 -- WHAT v1.9.8 DOES - DEATH COMES FROM THE GAME, NOT FROM hp > 0
@@ -342,7 +342,7 @@
 -- ===================================================================
 
 local KEY = 'Hd2ApwGuidance3'
-local REVISION = 'guided-rounds-v1.9.14'
+local REVISION = 'guided-rounds-v1.9.15'
 if rawget(_G, KEY) then return end
 local state = { frame = 0, writes = 0, binds = 0, armed = false, leased = false, failures = 0,
                 sh_note = {} }
@@ -2177,8 +2177,30 @@ local function asset_watch_new(list, source)
     end
     return watch
 end
--- Runtime 0.40.1 and older own the request (their synced assets reach clients).
--- Anything newer, or unknown, uses the built-in loader so the two never fight.
+-- v1.9.15: the built-in local load and the optional Runtime sync are two
+-- independent watches.  Each ages on its own and neither may cancel the other,
+-- so a slow or refusing Runtime cannot keep the local materials away.
+local function asset_pump_one(field, done)
+    local aw = state[field]
+    if not aw or not aw.tick then return end
+    aw.age = (aw.age or 0) + 0.016
+    if aw.age > 20 then pcall(aw.tick, aw, 0.016) end
+    if aw.status == 'complete' then
+        state[field] = nil
+        log(done)
+    elseif aw.status == 'rejected' then
+        state[field] = nil
+        log('ASSET rejected (' .. tostring(aw.source) .. '): ' .. tostring(aw.error))
+    elseif aw.status == 'cancelled' then
+        state[field] = nil
+    end
+end
+local function asset_pump()
+    asset_pump_one('asset_watch', 'ASSET resident - the leased projectile has its material now')
+    asset_pump_one('asset_sync', 'ASSET sync resident - HD2Runtime shares the package with the lobby')
+end
+-- The built-in loader is the local guarantee on every machine; an installed
+-- HD2Runtime is only asked to share the package with the lobby.
 local ASSET_WEAPON = 'P-92 Warrant'
 -- v4.6: the bomblet can borrow a seeker that belongs to another weapon's
 -- package (1 = MLS-4X commando, 2 = Patriot exosuit, 3 = the missile silo).  If
@@ -2223,11 +2245,12 @@ local function asset_start()
                 :format(w2[2]))
         end
     end
-    state.asset_fallback = list
-    -- Prefer an installed Runtime even when it is newer than the version this
-    -- addon used to delegate to: 0.50.x speaks the same asset API, and its
-    -- SYNCED ASSETS is what makes a client WITHOUT the loadout see the round.
-    -- The built-in loader is the fallback if the Runtime refuses the request.
+    -- v1.9.15: the addon asks for the packages itself on every machine first.
+    -- A squadmate who installed the mod must not depend on HD2Runtime to see
+    -- the round; the built-in loader is the local guarantee.  An installed
+    -- Runtime is asked as well, only for its lobby sync (it shares the package
+    -- with peers that never carry the loadout).
+    state.asset_watch = asset_watch_new(list)
     local ok, hd2 = pcall(require, 'mods/skyeshade/hd2runtime')
     if ok and type(hd2) == 'table' and hd2.require_assets then
         local ok2, watch = pcall(function()
@@ -2251,16 +2274,15 @@ local function asset_start()
         end)
         if ok2 and type(watch) == 'table' then
             watch.source = 'runtime'
-            state.asset_watch = watch
-            log(('ASSET asked HD2Runtime %s to load the package of %s (status=%s)')
+            state.asset_sync = watch
+            log(('ASSET also asked HD2Runtime %s to sync the package of %s (status=%s)')
                 :format(tostring(hd2.version), ASSET_WEAPON, tostring(watch.status)))
-            return
+        else
+            log('ASSET HD2Runtime refused the sync request: ' .. tostring(watch))
         end
-        log('ASSET HD2Runtime refused the package request: ' .. tostring(watch))
     else
-        log('ASSET HD2Runtime is not installed - the built-in loader is used')
+        log('ASSET HD2Runtime is not installed - the built-in loader is the only one')
     end
-    state.asset_watch = asset_watch_new(list)
 end
 
 local SEEK_LIST = {
@@ -5472,12 +5494,11 @@ local menu_step = (function()
               .. '的伤害。' },
         { k = 'require_assets', en = 'LOAD PROJECTILE MATERIALS', zh = '加载弹丸材质',
           d_en = 'Keep the leased projectile package loaded so it does not show '
-              .. 'the missing-material icon. An installed HD2Runtime is used (its '
-              .. 'synced assets also cover clients without the loadout); otherwise '
-              .. 'the built-in loader requests the package.',
-          d_zh = '让租来的弹丸资源包保持加载，避免出现缺材质的紫问号。装了 '
-              .. 'HD2Runtime 就交给它（它的大厅同步还能让没装包的队友也看到）；'
-              .. '没装就用内置装载器请求。' },
+              .. 'the missing-material icon. The addon loads it itself on every '
+              .. 'machine; an installed HD2Runtime is only asked to share it with '
+              .. 'the lobby.',
+          d_zh = '让租来的弹丸资源包保持加载，避免出现缺材质的紫问号。每台装了本 mod '
+              .. '的机器都会自己加载；若同时装了 HD2Runtime，还会让它把包同步给大厅。' },
         { k = 'scope_fix', en = 'FOLLOW THE SCOPE ZOOM',
           zh = '开镜锁定范围跟随倍镜',
           d_en = 'OFF (shipped): the lock cone is compensated by the camera zoom, '
@@ -7440,33 +7461,12 @@ local my_update = function(...)
             state.cycle_down = c
         end
     end
-    if state.asset_watch and state.asset_watch.tick then
-        local aw = state.asset_watch
-        -- Give the game time to finish starting before touching its package
-        -- system: the instance and its reference map are allocated during
-        -- boot, and a probe that fails in that window is not a build mismatch.
-        aw.age = (aw.age or 0) + 0.016
-        if aw.age > 20 then
-            pcall(aw.tick, aw, 0.016)
-        end
-        if aw.status == 'complete' then
-            state.asset_watch = nil
-            log('ASSET resident - the leased projectile has its material now')
-        elseif aw.status == 'rejected' then
-            state.asset_watch = nil
-            log('ASSET rejected (' .. tostring(aw.source) .. '): ' .. tostring(aw.error))
-            -- A Runtime that refused the request is not the end: the same
-            -- packages can still be asked for through the built-in loader.
-            if aw.source == 'runtime' and state.asset_fallback and not state.asset_hard then
-                local fallback = asset_watch_new(state.asset_fallback)
-                state.asset_fallback = nil
-                state.asset_watch = fallback
-                log('ASSET falling back to the built-in loader for the same packages')
-            end
-        elseif aw.status == 'cancelled' then
-            state.asset_watch = nil
-        end
-    end
+    -- Give the game time to finish starting before touching its package
+    -- system: the instance and its reference map are allocated during
+    -- boot, and a probe that fails in that window is not a build mismatch.
+    -- asset_pump drives both watches: the built-in local load and the
+    -- optional Runtime lobby sync.
+    asset_pump()
     if cfg.enable == 1 and state.armed then
         local ok, err = pcall(step)
         if not ok then

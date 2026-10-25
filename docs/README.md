@@ -6,8 +6,8 @@ Guided Rounds 把 **P-92 法令**的制导行为装到武器清单里的每一�
 在瞄准锥里挑一个目标并追上去；**伤害、初速、弹道都还是武器自己的数值**。
 
 - 作者：cancan2333 & SoS2430
-- 版本：1.9.14
-- 需要：Bingus Shared Loader v15+、Vanilla Plus Megapack；HD2Runtime 可选（装了优先交给它——它的资源同步能让没装包的队友也看到弹丸；拒收时自动回退内置装载器）
+- 版本：1.9.15
+- 需要：Bingus Shared Loader v15+、Vanilla Plus Megapack（可选 HD2Runtime，仅用于把资源包同步给大厅；每台装了本 mod 的机器由内置装载器自己加载）。
 - 源码：`docs/guided_rounds.lua` · 构建：`build.py`
 
 ## 安装
@@ -101,7 +101,7 @@ Guided Rounds 把 **P-92 法令**的制导行为装到武器清单里的每一�
 | NEAREST ENEMY FALLBACK | `cone_fallback` | 0 | 锥内没人时改锁最近敌人 |
 | GUIDE RL-77 CLUSTER BOMBLETS | `cluster_guide` | 1 | 给 RL-77 子弹药装制导 |
 | KEEP THE WEAPON OWN DAMAGE | `apw_damage` | 1 | 保留武器自己的伤害 |
-| LOAD PROJECTILE MATERIALS | `require_assets` | 1 | 保持弹丸材质加载（装了 HD2Runtime 优先，否则内置装载器） |
+| LOAD PROJECTILE MATERIALS | `require_assets` | 1 | 在每台机器上加载弹丸资源包（装了 HD2Runtime 时再请它同步大厅） |
 | FOLLOW THE SCOPE ZOOM | `scope_fix` | 0 | 开镜锁定范围随倍镜放大 |
 | ENABLE | `enable` | 1 | 总开关（F7 重启同一开关） |
 
@@ -225,6 +225,7 @@ python build.py --check-against "../BingusSharedLoader-source-v19"
 
 | 版本 | 内容 |
 | --- | --- |
+| v1.9.15 | 内置装载器在每台机器上都运行，HD2Runtime 只额外同步大厅；全队装了本 mod 时不再出现粉色问号 |
 | v1.9.14 | 修好组队时队友看到粉色问号：内置装载器等游戏启动后再证明并请求，启动期失败不再永久禁用；装了 HD2Runtime 就优先交给它，拒收时自动回退内置装载器 |
 | v1.9.12 | 无票者锁不上：死亡缓存只认 `status=2`；全零骨骼视为读不到；WATCH 增加 `dead=`/`status=` |
 | v1.9.11 | 单枪优先级改用准心指向的武器；`CUSTOM` 也指向该枪并关 `glob_edit`；换枪后瞄准模式即时；`0 = 未设置` |

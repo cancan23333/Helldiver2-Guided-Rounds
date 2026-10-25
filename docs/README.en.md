@@ -8,8 +8,8 @@ steers onto it — **damage, muzzle velocity and ballistics remain the weapon's
 own values**.
 
 - Authors: cancan2333 & SoS2430
-- Version: 1.9.14
-- Requires: Bingus Shared Loader v15+, Vanilla Plus Megapack. **HD2Runtime optional** (an installed one is preferred - its asset sync reaches clients without the loadout; the built-in loader takes over if it refuses)
+- Version: 1.9.15
+- Requires: Bingus Shared Loader v15+, Vanilla Plus Megapack. **HD2Runtime optional** (only used to sync the packages to the lobby; every machine with the mod loads them locally)
 - Source: `docs/guided_rounds.lua` · Build: `build.py`
 
 ## Install
@@ -112,7 +112,7 @@ also accepts 8 = P-33 round, 9 = FAF-14 Spear.
 | NEAREST ENEMY FALLBACK | `cone_fallback` | 0 | With an empty cone, take the nearest enemy |
 | GUIDE RL-77 CLUSTER BOMBLETS | `cluster_guide` | 1 | Guide the RL-77 bomblets |
 | KEEP THE WEAPON OWN DAMAGE | `apw_damage` | 1 | Restore the weapon's own damage |
-| LOAD PROJECTILE MATERIALS | `require_assets` | 1 | Keep the projectile material loaded (HD2Runtime preferred when installed, built-in loader otherwise) |
+| LOAD PROJECTILE MATERIALS | `require_assets` | 1 | Load the projectile packages on this machine (an installed HD2Runtime is also asked to sync the lobby) |
 | FOLLOW THE SCOPE ZOOM | `scope_fix` | 0 | Lock range follows scope magnification |
 | ENABLE | `enable` | 1 | Master switch (F7 restarts it) |
 
@@ -253,6 +253,7 @@ persistence); see `tools/README.md` for their path requirements.
 
 | Version | Change |
 | --- | --- |
+| v1.9.15 | The built-in loader runs on every machine; HD2Runtime is only asked to sync the lobby, so a squad all running the mod sees no pink question mark |
 | v1.9.14 | Fixes the pink question mark clients saw with v1.9.13: the built-in loader waits for the game to start before proving/requesting, boot-time failures no longer disable it for the session; an installed HD2Runtime is preferred and the built-in loader is the fallback |
 | v1.9.12 | Voteless lock fix: dead cache only trusts `status=2`; zero bone treated as unreadable; WATCH gains `dead=`/`status=` |
 | v1.9.11 | Per-weapon priority reads the weapon the crosshair points at; `CUSTOM` also points the pages at it and clears `glob_edit`; aim mode follows a weapon swap at once; `0 = not set` |

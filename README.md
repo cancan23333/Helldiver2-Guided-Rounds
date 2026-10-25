@@ -12,12 +12,25 @@ in-game **MODS** menu, all live-adjustable.
 
 - Authors: **cancan2333 & SoS2430**
 - Requires: **Bingus Shared Loader v15+**, **Vanilla Plus Megapack** (it provides
-  the in-game MODS menu). **HD2Runtime optional**: when installed, it is preferred
-  (its asset sync reaches clients without the loadout); otherwise the built-in
-  loader requests the packages
+  the in-game MODS menu). **HD2Runtime optional**: the addon loads the projectile
+  packages on every machine that has it; an installed runtime is only asked to
+  sync them to the lobby.
 - Source: `docs/guided_rounds.lua` · Build: `build.py`
 
 ---
+
+## What's new in v1.9.15
+
+**Squadmates who also run the mod no longer see a pink question mark.** The
+built-in loader now always runs on your machine; v1.9.14 still preferred an
+installed HD2Runtime and only fell back to the built-in loader, so a squad where
+everyone had the mod could still end up with the runtime's stricter build check
+failing. An installed runtime is now only asked to sync the packages to the
+lobby.
+
+- `LOAD PROJECTILE MATERIALS` (on by default) is the switch for both paths.
+- Unrecognised game builds fail closed with one log line; the rest of the mod is
+  unaffected.
 
 ## What's new in v1.9.14
 
@@ -128,6 +141,7 @@ packer.
 
 ## Version
 
+- **v1.9.15** — the built-in loader always runs locally; HD2Runtime is only asked to sync the lobby
 - **v1.9.14** — fixes the pink question mark clients saw with v1.9.13 (the built-in loader now waits for the game); HD2Runtime preferred, built-in fallback
 - **v1.9.12** — Voteless lock fix (dead cache only trusts `status=2`), zero-bone guard, WATCH counters
 - **v1.9.11** — per-weapon priority reads the weapon in hand; CUSTOM also points the pages at that weapon; aim mode follows a weapon swap immediately; 0 = not set
