@@ -19,6 +19,14 @@ in-game **MODS** menu, all live-adjustable.
 
 ---
 
+## What's new in v1.9.16
+
+**Add-on weapons are guided out of the box.** Scope of Authority's R-40
+Sightliner, P-44 Mist, AMW-20 Apex and LAS-44 Nova, and Stratagem Compendium's
+EAT-77/40/23, are now in the weapon catalog and enabled by default. An older
+cfg gets their hashes appended once; their class pages then offer the same
+OFF / AIM FIRST / BIG FIRST / SMALL FIRST choices as the stock guns.
+
 ## What's new in v1.9.15
 
 **Squadmates who also run the mod no longer see a pink question mark.** The
@@ -141,6 +149,7 @@ packer.
 
 ## Version
 
+- **v1.9.16** — Scope of Authority / Stratagem Compendium weapons (R-40, P-44, AMW-20, LAS-44, EAT-77/40/23) are guided out of the box
 - **v1.9.15** — the built-in loader always runs locally; HD2Runtime is only asked to sync the lobby
 - **v1.9.14** — fixes the pink question mark clients saw with v1.9.13 (the built-in loader now waits for the game); HD2Runtime preferred, built-in fallback
 - **v1.9.12** — Voteless lock fix (dead cache only trusts `status=2`), zero-bone guard, WATCH counters

@@ -1,6 +1,6 @@
 -- HD2-Addon: mods/cancan2333/guided_rounds
 -- Author: cancan2333 & SoS2430
--- Mod: Guided Rounds v1.9.15
+-- Mod: Guided Rounds v1.9.16
 -- zh: TARGET PRIORITY 的单位名用资源表中文名显示（英文名仍用于排序/过滤）。
 --
 -- WHAT v1.9.8 DOES - DEATH COMES FROM THE GAME, NOT FROM hp > 0
@@ -342,7 +342,7 @@
 -- ===================================================================
 
 local KEY = 'Hd2ApwGuidance3'
-local REVISION = 'guided-rounds-v1.9.15'
+local REVISION = 'guided-rounds-v1.9.16'
 if rawget(_G, KEY) then return end
 local state = { frame = 0, writes = 0, binds = 0, armed = false, leased = false, failures = 0,
                 sh_note = {} }
@@ -1587,7 +1587,7 @@ local cfg = { enable = 1, autostart = 1, key = 118, cone_deg = 12, max_dist = 25
               round_life = 0,
               cone_fallback = 0, seek_key = 121, seek_cycle = 0,
               require_assets = 1,
-              warrant_type = 0,
+              warrant_type = 0, wpadd = 0,
               ship_scan = 0, proj_ptr = 0,
               los_check = 1, los_desc = 0, los_debug = 0,              los_foliage = 1,
               scan_ms = 1.5, target_interval = 20,
@@ -1608,6 +1608,21 @@ local cfg = { enable = 1, autostart = 1, key = 118, cone_deg = 12, max_dist = 25
               range_ring = 1,
               -- P3: 1 = draw the wire box on the locked target.
               target_box = 1 }
+-- v1.9.16: weapons added by other mods (Scope of Authority backport,
+-- Stratagem Compendium).  They are not in the game's own catalog, so a
+-- cfg written before this build lists none of them; the loader appends
+-- them once (see wpadd) and the class pages then offer them like any
+-- other gun.  Order here is irrelevant; the menu table below carries the
+-- names and classes.
+local ADDON_WEAPONS = {
+    '0x41F2DEF484634B59',
+    '0x027DEC442CC26A90',
+    '0x8E5F989806016323',
+    '0x245CB793C32F3FBC',
+    '0xF186E91F81B6D7B0',
+    '0xD11A5727EF27EDD9',
+    '0xF8D220EF5B74CF5E',
+}
 -- which seeker entity the RL-77 cluster bomblets borrow (see CLUSTER.units).
 -- 0 = the P-92 warrant, the same one the main round uses (needs a weapon lock)
 -- 1 = MLS-4X commando missile, Guidance, steers a projectile
@@ -1667,7 +1682,8 @@ local function write_default_cfg()
         '#                and taken again, which clears the occasional state',
         '#                where it stops locking.  To switch the addon OFF',
         '#                use the MODS tab, or set enable=0 below.',
-        'weapons=0x89C5493E08CA4207',
+        'weapons=0x89C5493E08CA4207,0x41F2DEF484634B59,0x027DEC442CC26A90,0x8E5F989806016323,0x245CB793C32F3FBC,0xF186E91F81B6D7B0,0xD11A5727EF27EDD9,0xF8D220EF5B74CF5E',
+        'wpadd=1',
         '# prio_targets  weapons that prefer the BIGGEST enemy over the',
         '#                one nearest the crosshair. Set from the MODS tab.',
         'prio_targets=',
@@ -2423,6 +2439,34 @@ if CFG_PATH then
             end
         end
         f:close()
+        -- v1.9.16: mods such as Scope of Authority / Stratagem Compendium add
+        -- weapons no vanilla catalog knows, so a cfg written before them has no
+        -- row to switch their lock on.  Append their hashes once, then leave
+        -- the weapons= line to the player (weapons=none is honoured).
+        if ver == CFGVER and tonumber(cfg.wpadd) ~= 1 then
+            local missing = {}
+            if #WEAPONS_TXT > 0 then
+                for _, tok in ipairs(ADDON_WEAPONS) do
+                    local b, seen = hash8(tok), false
+                    for _, v in ipairs(WEAPONS_TXT) do
+                        if hash8(v) == b then seen = true break end
+                    end
+                    if not seen then missing[#missing + 1] = tok end
+                end
+            end
+            if #missing > 0 then
+                local out = {}
+                for _, v in ipairs(WEAPONS_TXT) do out[#out + 1] = v end
+                for _, v in ipairs(missing) do out[#out + 1] = v end
+                local txt = table.concat(out, ',')
+                parse_weapons(txt)
+                state.save_cfg_key('weapons', txt)
+                log(('WEAPONS added %d add-on weapon(s) to weapons= (v1.9.16 upgrade)')
+                    :format(#missing))
+            end
+            cfg.wpadd = 1
+            state.save_cfg_key('wpadd', '1')
+        end
         if ver ~= CFGVER then
             local old = CFG_PATH .. '.v' .. tostring(ver) .. '.bak'
             pcall(os.remove, old)
@@ -5543,6 +5587,7 @@ local menu_step = (function()
         { h = '0x4C786785C79D44E7', en = 'R-63CS Diligence Counter Sniper', zh = 'R-63CS 反狙击"勤勉"', cls = 'DMR' },
         { h = '0xF0338468DCDB6A6C', en = 'R-72 Censor', zh = 'R-72 审查官', cls = 'DMR' },
         { h = '0x7B75E5132FFD4CA6', en = 'R-2124 Constitution', zh = 'R-2124 宪法', cls = 'DMR' },
+        { h = '0x41F2DEF484634B59', en = 'R-40 Sightliner', zh = 'R-40 瞄准者', cls = 'DMR' },
         { h = '0x9571CA51F0DAF35B', en = 'MP-98 Knight', zh = 'MP-98 骑士', cls = 'SMG' },
         { h = '0x94BD931B5FB4EE95', en = 'SMG-32 Reprimand', zh = 'SMG-32 训斥', cls = 'SMG' },
         { h = '0x4E4A613EB9BF5C24', en = 'SMG-37 Defender', zh = 'SMG-37 防卫者', cls = 'SMG' },
@@ -5583,6 +5628,7 @@ local menu_step = (function()
         { h = '0x3575AABC5F1F9326', en = 'P-19 Redeemer', zh = 'P-19 救世主', cls = 'PISTOL' },
         { h = '0xC780BCD79547DA0F', en = 'P-69 Veto', zh = 'P-69 否决者', cls = 'PISTOL' },
         { h = '0xCF8934FF6567A42D', en = 'P-92 Warrant', zh = 'P-92 法令', cls = 'PISTOL' },
+        { h = '0x027DEC442CC26A90', en = 'P-44 Mist', zh = 'P-44 薄雾', cls = 'PISTOL' },
         { h = '0x1A437158E1B8D2A1', en = 'P-113 Verdict', zh = 'P-113 裁决', cls = 'PISTOL' },
         { h = '0x4D58C77087B774C5', en = 'M6C/SOCOM Pistol', zh = 'M6C 特种作战手枪', cls = 'PISTOL' },
         { h = '0x9EB160830321BFD6', en = 'GP-20 Ultimatum', zh = 'GP-20 最后通牒', cls = 'PISTOL' },
@@ -5640,10 +5686,15 @@ local menu_step = (function()
         { h = '0x25AA2FD4643CF4EE', en = 'FAF-14 Spear', zh = 'FAF-14 飞矛', cls = 'SUPPORT' },
         { h = '0x26E40437EA275296', en = 'RL-77 Airburst Rocket Launcher', zh = 'RL-77 空爆火箭弹发射器', cls = 'SUPPORT' },
         { h = '0x5990123D142B16CB', en = 'MLS-4X Commando', zh = 'MLS-4X 突击兵', cls = 'SUPPORT' },
+        { h = '0x8E5F989806016323', en = 'AMW-20 Apex', zh = 'AMW-20 顶点', cls = 'SUPPORT' },
+        { h = '0x245CB793C32F3FBC', en = 'LAS-44 Nova', zh = 'LAS-44 新星', cls = 'SUPPORT' },
         { h = '0xFC13460592CA79AA', en = 'Mini Missile Silo Target Designator', zh = 'MS-11 单兵导弹发射井', cls = 'SUPPORT' },
         { h = '0x80932FA0ED6901D3', en = 'EAT-17 Expendable Anti-Tank', zh = 'EAT-17 消耗性反坦克武器', cls = 'SUPPORT' },
         { h = '0xB2B5E0D185605F9E', en = 'EAT-700 Expendable Napalm', zh = 'EAT-700 消耗性凝固汽油弹', cls = 'SUPPORT' },
         { h = '0x7617642765AC38C7', en = 'EAT-411 Leveller', zh = 'EAT-411 荡平者', cls = 'SUPPORT' },
+        { h = '0xF186E91F81B6D7B0', en = 'EAT-77 Expendable Cluster', zh = 'EAT-77 集束', cls = 'SUPPORT' },
+        { h = '0xD11A5727EF27EDD9', en = 'EAT-40 Expendable Gas', zh = 'EAT-40 毒气', cls = 'SUPPORT' },
+        { h = '0xF8D220EF5B74CF5E', en = 'EAT-23 Expendable EMS', zh = 'EAT-23 电磁', cls = 'SUPPORT' },
         { h = '0xD54B9505C0F72873', en = 'LAS-98 Laser Cannon', zh = 'LAS-98 激光大炮', cls = 'SUPPORT' },
         { h = '0x35A61296619CC47E', en = 'LAS-99 Quasar Cannon', zh = 'LAS-99 类星体加农炮', cls = 'SUPPORT' },
         { h = '0xE8D5F49AD7780E54', en = 'PLAS-45 Epoch', zh = 'PLAS-45 纪元', cls = 'SUPPORT' },

@@ -8,7 +8,7 @@ steers onto it — **damage, muzzle velocity and ballistics remain the weapon's
 own values**.
 
 - Authors: cancan2333 & SoS2430
-- Version: 1.9.15
+- Version: 1.9.16
 - Requires: Bingus Shared Loader v15+, Vanilla Plus Megapack. **HD2Runtime optional** (only used to sync the packages to the lobby; every machine with the mod loads them locally)
 - Source: `docs/guided_rounds.lua` · Build: `build.py`
 
@@ -59,6 +59,9 @@ weapons always land on the support page. Names follow the game language.
 | `SMALLEST HP FIRST` | Guided, smallest health first |
 
 The first two write `weapons=`, the last two `prio_targets=` / `prio_small=`.
+
+### Add-on weapons (guns other mods add)
+Mods such as the Scope of Authority backport and Stratagem Compendium add weapons the game's own catalog does not know. v1.9.16 ships their hashes: R-40 Sightliner, P-44 Mist, AMW-20 Apex, LAS-44 Nova, EAT-77/40/23. A cfg written before this build gets those hashes appended to `weapons=` once (after that the line is yours; `weapons=none` is left alone), and the weapons then appear on their class pages with the same OFF / AIM FIRST / BIG FIRST / SMALL FIRST choices as any other gun. A squadmate who installs those mods needs v1.9.16 too — older builds still have the old list.
 
 ### Page 12: per-weapon priority
 
@@ -253,6 +256,7 @@ persistence); see `tools/README.md` for their path requirements.
 
 | Version | Change |
 | --- | --- |
+| v1.9.16 | Supports the weapons added by Scope of Authority / Stratagem Compendium (R-40, P-44, AMW-20, LAS-44, EAT-77/40/23): an older cfg gets them appended to `weapons=` on the first launch, then their class pages switch them like any other gun |
 | v1.9.15 | The built-in loader runs on every machine; HD2Runtime is only asked to sync the lobby, so a squad all running the mod sees no pink question mark |
 | v1.9.14 | Fixes the pink question mark clients saw with v1.9.13: the built-in loader waits for the game to start before proving/requesting, boot-time failures no longer disable it for the session; an installed HD2Runtime is preferred and the built-in loader is the fallback |
 | v1.9.12 | Voteless lock fix: dead cache only trusts `status=2`; zero bone treated as unreadable; WATCH gains `dead=`/`status=` |

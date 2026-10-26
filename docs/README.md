@@ -6,7 +6,7 @@ Guided Rounds 把 **P-92 法令**的制导行为装到武器清单里的每一�
 在瞄准锥里挑一个目标并追上去；**伤害、初速、弹道都还是武器自己的数值**。
 
 - 作者：cancan2333 & SoS2430
-- 版本：1.9.15
+- 版本：1.9.16
 - 需要：Bingus Shared Loader v15+、Vanilla Plus Megapack（可选 HD2Runtime，仅用于把资源包同步给大厅；每台装了本 mod 的机器由内置装载器自己加载）。
 - 源码：`docs/guided_rounds.lua` · 构建：`build.py`
 
@@ -52,6 +52,9 @@ Guided Rounds 把 **P-92 法令**的制导行为装到武器清单里的每一�
 | `SMALLEST HP FIRST` | 制导，最大血量小优先 |
 
 前两项写 `weapons=`，后两项分别写 `prio_targets=` / `prio_small=`。
+
+### 附加武器（别的 mod 加的枪）
+Scope of Authority backport、Stratagem Compendium 这类 mod 会新增游戏目录里没有的武器。v1.9.16 起内置了它们的哈希：R-40 Sightliner、P-44 Mist、AMW-20 Apex、LAS-44 Nova、EAT-77/40/23。旧 cfg 在第一次启动 v1.9.16 时会把这些哈希补进 `weapons=`（只补一次，之后 `weapons=` 归你自己；写成 `weapons=none` 不会被改写）；它们随即出现在对应类别页，像普通武器一样切 OFF / 准心优先 / 最大血量大优先 / 最大血量小优先。装新 mod 的队友也要更新到 v1.9.16，否则他们那边是旧列表。
 
 ### 12 单枪优先级页
 
@@ -225,6 +228,7 @@ python build.py --check-against "../BingusSharedLoader-source-v19"
 
 | 版本 | 内容 |
 | --- | --- |
+| v1.9.16 | 支持 Scope of Authority / Stratagem Compendium 新增的武器（R-40、P-44、AMW-20、LAS-44、EAT-77/40/23）：旧 cfg 第一次启动时自动补进 `weapons=`，之后照常按类别页开关 |
 | v1.9.15 | 内置装载器在每台机器上都运行，HD2Runtime 只额外同步大厅；全队装了本 mod 时不再出现粉色问号 |
 | v1.9.14 | 修好组队时队友看到粉色问号：内置装载器等游戏启动后再证明并请求，启动期失败不再永久禁用；装了 HD2Runtime 就优先交给它，拒收时自动回退内置装载器 |
 | v1.9.12 | 无票者锁不上：死亡缓存只认 `status=2`；全零骨骼视为读不到；WATCH 增加 `dead=`/`status=` |

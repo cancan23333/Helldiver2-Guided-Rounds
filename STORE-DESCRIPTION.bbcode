@@ -1,8 +1,8 @@
-[size=6][b]Guided Rounds v1.9.15 —— 制导弹丸 / Guided Rounds[/b][/size]
+[size=6][b]Guided Rounds v1.9.16 —— 制导弹丸 / Guided Rounds[/b][/size]
 [center][i]把 P-92 法令手枪的原版制导机制，装到武器清单里的每一把枪上[/i][/center]
 [center][i]The P-92 Warrant's own guidance, ported to every weapon on the list[/i][/center]
 
-[center][size=5][b][color=#008000]★ v1.9.15 —— 材质改为每台装了 mod 的机器自己加载：队友也装了本 mod 就不会再看到粉色问号；HD2Runtime 仅用于大厅同步 ★[/color][/b][/size]
+[center][size=5][b][color=#008000]★ v1.9.16 —— 支持 Scope of Authority / Stratagem Compendium 的新武器：R-40、P-44、AMW-20、LAS-44、EAT-77/40/23 开箱即可制导 ★[/color][/b][/size]
 [b]「全局优先级层」这个开关删掉了[/b]，中间层出厂就是开着的。真想关掉它，只能手动把配置文件里的[b]glob_on[/b] 改成 0——那样 12～19 这几页（单枪优先级、瞄准优先级、5 页阵营优先级）整个都不会注册，菜单里自然也就没有它们，这正是开关做不到的事（选项包的行只能加、不能删）。另外，[b]关掉「手动瞄准优先级」以后，那 5 页默认写的就是全局表[/b]，页名前缀也会跟着变成「全局」——关掉单枪那层之后，本来也只有全局表还有意义。[b]The GLOBAL PRIORITY LAYER row is gone[/b]: the middle layer is on as shipped, and switching it off is a cfg edit (glob_on=0) that unregisters pages 12-19 entirely - something a toggle row could never do, since rows can only be added, never removed. Turning MANUAL AIM PRIORITY off now also puts the five faction pages back on the global table and titles them GLOBAL.[/center]
 
 [hr]
@@ -145,7 +145,7 @@
 
 [hr]
 
-[size=6][b]Guided Rounds v1.9.15 —— Guided Rounds[/b][/size]
+[size=6][b]Guided Rounds v1.9.16 —— Guided Rounds[/b][/size]
 [center][i]The P-92 Warrant's own guidance, ported to every weapon on the list[/i][/center]
 
 [size=5][b]In one line[/b][/size]

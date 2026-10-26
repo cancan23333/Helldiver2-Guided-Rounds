@@ -16,6 +16,10 @@
 
 ---
 
+## v1.9.16 更新
+
+**新增武器开箱即用。** Scope of Authority 的 R-40 Sightliner、P-44 Mist、AMW-20 Apex、LAS-44 Nova，以及 Stratagem Compendium 的 EAT-77/40/23 已进武器目录并默认开启。旧 cfg 只会自动补一次哈希；之后它们会像原生枪一样出现在类别页，可切 OFF / 准心优先 / 最大血量大优先 / 最大血量小优先。
+
 ## v1.9.15 更新
 
 **队友也装了本 mod 时，不会再看到粉色问号。** v1.9.14 仍是「装了 runtime 就
@@ -121,6 +125,7 @@ python build.py
 
 ## 版本
 
+- **v1.9.16** —— 支持 Scope of Authority / Stratagem Compendium 的新武器（R-40、P-44、AMW-20、LAS-44、EAT-77/40/23），开箱即用
 - **v1.9.15** —— 内置装载器每台机器都运行；HD2Runtime 仅用来同步大厅
 - **v1.9.14** —— 修好 v1.9.13 组队时队友看到的粉色问号（内置装载器等游戏启动后再请求）；HD2Runtime 优先、内置回退
 - **v1.9.12** —— 无票者锁不上：死亡缓存只认 `status=2`、全零骨骼视为读不到、WATCH 增加计数
