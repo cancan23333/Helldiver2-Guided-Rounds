@@ -6,14 +6,14 @@ Guided Rounds 把 **P-92 法令**的制导行为装到武器清单里的每一�
 在瞄准锥里挑一个目标并追上去；**伤害、初速、弹道都还是武器自己的数值**。
 
 - 作者：cancan2333 & SoS2430
-- 版本：1.9.16
+- 版本：1.9.17
 - 需要：Bingus Shared Loader v15+、Vanilla Plus Megapack（可选 HD2Runtime，仅用于把资源包同步给大厅；每台装了本 mod 的机器由内置装载器自己加载）。
 - 源码：`docs/guided_rounds.lua` · 构建：`build.py`
 
 ## 安装
 
 1. 安装 [HD2 Arsenal](https://www.nexusmods.com/helldivers2/mods/4664) 加载器。
-2. 用 HD2 Arsenal 导入 `Guided-Rounds-v1.9.14.zip`，并装好
+2. 用 HD2 Arsenal 导入 `Guided-Rounds-v1.9.17.zip`，并装好
    [Bingus Shared Loader](https://ayakamods.com/mods/bingus-shared-loader.3861/)、
    [Vanilla Plus Megapack](https://www.nexusmods.com/helldivers2/mods/16294)。
    [hd2runtime](https://ayakamods.com/mods/hd2runtime.4260/) 可选：装了优先交给它（它的大厅同步
@@ -220,7 +220,7 @@ python build.py              # 生成 Addon 与 zip
 python build.py --check-against "../BingusSharedLoader-source-v19"
 ```
 
-打包结果：`Addon/9ba626afa44a3aa3.patch_0`、`Guided-Rounds-v1.9.14.zip`。
+打包结果：`Addon/9ba626afa44a3aa3.patch_0`、`Guided-Rounds-v1.9.17.zip`。
 `tools/` 里是只读检查脚本（语法、全局变量、局部变量、包结构、持久化），
 `tools/README.md` 有各自路径要求。
 
@@ -228,6 +228,7 @@ python build.py --check-against "../BingusSharedLoader-source-v19"
 
 | 版本 | 内容 |
 | --- | --- |
+| v1.9.17 | 组队粉问号：内置装载器改为第一帧就请求资源包（watch 自己等包表就绪），不再有 20 秒延迟；1.9.13 那种“证明失败→整局禁用→回退 runtime 又拒收”的路径不存在了 |
 | v1.9.16 | 支持 Scope of Authority / Stratagem Compendium 新增的武器（R-40、P-44、AMW-20、LAS-44、EAT-77/40/23）：旧 cfg 第一次启动时自动补进 `weapons=`，之后照常按类别页开关 |
 | v1.9.15 | 内置装载器在每台机器上都运行，HD2Runtime 只额外同步大厅；全队装了本 mod 时不再出现粉色问号 |
 | v1.9.14 | 修好组队时队友看到粉色问号：内置装载器等游戏启动后再证明并请求，启动期失败不再永久禁用；装了 HD2Runtime 就优先交给它，拒收时自动回退内置装载器 |

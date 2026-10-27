@@ -16,6 +16,16 @@
 
 ---
 
+## v1.9.17 更新
+
+**修好 v1.9.13 组队时的粉色问号。** v1.9.13 的内置装载器只在加载时证明一次游戏
+build，一次失败就整局禁用；随后回退给 runtime 同步，而 runtime 对更新的游戏 build
+会拒绝。现在内置装载器从第一帧就请求资源包（watch 会等游戏自身的包表就绪），请求
+在第一波弹丸生成之前就完成，每台装了本 mod 的机器都是如此。
+
+- 0.40.1 及更早的 runtime 仍然只用来把包同步给大厅；更新的 runtime 不去打扰。
+- 若本机游戏 build 无法通过证明，日志只写一行并安静关闭，mod 其他功能照常。
+
 ## v1.9.16 更新
 
 **新增武器开箱即用。** Scope of Authority 的 R-40 Sightliner、P-44 Mist、AMW-20 Apex、LAS-44 Nova，以及 Stratagem Compendium 的 EAT-77/40/23 已进武器目录并默认开启。旧 cfg 只会自动补一次哈希；之后它们会像原生枪一样出现在类别页，可切 OFF / 准心优先 / 最大血量大优先 / 最大血量小优先。
@@ -57,7 +67,7 @@ v1.9.11（单枪优先级）与 v1.9.0（分类页）见[版本历史](docs/READ
 ## 安装
 
 1. 先装 mod 加载器：[HD2 Arsenal](https://www.nexusmods.com/helldivers2/mods/4664)。
-2. 在 HD2 Arsenal 里导入 `Guided-Rounds-v1.9.14.zip`，并确认下面几个也装好：
+2. 在 HD2 Arsenal 里导入 `Guided-Rounds-v1.9.17.zip`，并确认下面几个也装好：
    - [Bingus Shared Loader](https://ayakamods.com/mods/bingus-shared-loader.3861/)
    - [hd2runtime](https://ayakamods.com/mods/hd2runtime.4260/) —— 可选：装了优先交给它
      （它也会把包同步给队友），否则由本 mod 自己加载
@@ -120,11 +130,12 @@ python build.py
 ```
 
 只依赖 Python 3，不需要游戏或 SDK。输出
-`Addon/9ba626afa44a3aa3.patch_0` 与 `Guided-Rounds-v1.9.14.zip`。
+`Addon/9ba626afa44a3aa3.patch_0` 与 `Guided-Rounds-v1.9.17.zip`。
 `--check-against` 可对照 BingusSharedLoader 的参考打包器。
 
 ## 版本
 
+- **v1.9.17** —— 内置装载器从第一帧就请求资源包（去掉 20 秒延迟），全队都装本 mod 时不再出现 v1.9.13 的粉问号
 - **v1.9.16** —— 支持 Scope of Authority / Stratagem Compendium 的新武器（R-40、P-44、AMW-20、LAS-44、EAT-77/40/23），开箱即用
 - **v1.9.15** —— 内置装载器每台机器都运行；HD2Runtime 仅用来同步大厅
 - **v1.9.14** —— 修好 v1.9.13 组队时队友看到的粉色问号（内置装载器等游戏启动后再请求）；HD2Runtime 优先、内置回退

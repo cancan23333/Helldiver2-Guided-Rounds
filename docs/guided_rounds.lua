@@ -1,6 +1,6 @@
 -- HD2-Addon: mods/cancan2333/guided_rounds
 -- Author: cancan2333 & SoS2430
--- Mod: Guided Rounds v1.9.16
+-- Mod: Guided Rounds v1.9.17
 -- zh: TARGET PRIORITY 的单位名用资源表中文名显示（英文名仍用于排序/过滤）。
 --
 -- WHAT v1.9.8 DOES - DEATH COMES FROM THE GAME, NOT FROM hp > 0
@@ -342,7 +342,7 @@
 -- ===================================================================
 
 local KEY = 'Hd2ApwGuidance3'
-local REVISION = 'guided-rounds-v1.9.16'
+local REVISION = 'guided-rounds-v1.9.17'
 if rawget(_G, KEY) then return end
 local state = { frame = 0, writes = 0, binds = 0, armed = false, leased = false, failures = 0,
                 sh_note = {} }
@@ -2140,7 +2140,10 @@ end
 -- Nothing is requested until the first tick: the game allocates its package
 -- reference map while it starts, and a loader that gave up at load time was
 -- the reason a whole lobby could keep the missing-material icon.
-local ASSET_BOOT_WAIT = 25
+-- v1.9.17: the watch is ticked from the first frame, so the window below only
+-- bounds how long an *unprovable* build is retried before the loader gives up.
+-- A provable build asks at load time, long before the first mission spawn.
+local ASSET_BOOT_WAIT = 120
 local function asset_watch_new(list, source)
     local watch = { id = 'apw-lease', status = 'loading', packages = list,
         elapsed = 0, source = source or 'builtin' }
@@ -2152,7 +2155,9 @@ local function asset_watch_new(list, source)
             if not pins then
                 if self.elapsed > ASSET_BOOT_WAIT then
                     self.status = 'rejected'
-                    self.error = 'the built-in package loader is not ready: ' .. tostring(why)
+                    self.error = 'the built-in package loader is not ready after '
+                        .. tostring(ASSET_BOOT_WAIT) .. ' s: ' .. tostring(why)
+                        .. ' - this game build is not one the loader can vouch for'
                 end
                 return
             end
@@ -2200,7 +2205,11 @@ local function asset_pump_one(field, done)
     local aw = state[field]
     if not aw or not aw.tick then return end
     aw.age = (aw.age or 0) + 0.016
-    if aw.age > 20 then pcall(aw.tick, aw, 0.016) end
+    -- v1.9.17: ask from the first frame. The watch itself waits until the game's
+    -- package map exists, so an early ask cannot fail permanently; the old 20 s
+    -- delay let the first rounds of a fast mission spawn before the ask, which
+    -- is exactly when an observer sees the missing-material icon.
+    pcall(aw.tick, aw, 0.016)
     if aw.status == 'complete' then
         state[field] = nil
         log(done)
@@ -5538,11 +5547,12 @@ local menu_step = (function()
               .. '的伤害。' },
         { k = 'require_assets', en = 'LOAD PROJECTILE MATERIALS', zh = '加载弹丸材质',
           d_en = 'Keep the leased projectile package loaded so it does not show '
-              .. 'the missing-material icon. The addon loads it itself on every '
-              .. 'machine; an installed HD2Runtime is only asked to share it with '
-              .. 'the lobby.',
+              .. 'the missing-material icon. The addon asks for it on the first '
+              .. 'frame, so it is resident before the first shot; an installed '
+              .. 'HD2Runtime is only asked to share it with the lobby.',
           d_zh = '让租来的弹丸资源包保持加载，避免出现缺材质的紫问号。每台装了本 mod '
-              .. '的机器都会自己加载；若同时装了 HD2Runtime，还会让它把包同步给大厅。' },
+              .. '的机器从第一帧就会请求，开打前已驻留；若同时装了 HD2Runtime，'
+              .. '还会让它把包同步给大厅。' },
         { k = 'scope_fix', en = 'FOLLOW THE SCOPE ZOOM',
           zh = '开镜锁定范围跟随倍镜',
           d_en = 'OFF (shipped): the lock cone is compensated by the camera zoom, '
@@ -7281,6 +7291,17 @@ local reticle_step = (function()
             local t = w.type:upper():gsub('^0X', '')
             return t, nil, how .. (w.slot and ('/' .. tostring(w.slot)) or '')
         end)
+        -- v1.9.17: HD2Runtime 0.40.1 can initialise while local_player() still
+        -- answers nil (NO_AVATAR).  In that case the runtime is installed and the
+        -- gate would fall back to "draw everywhere"; the addon's own pose pick
+        -- already knows which held weapon the camera is looking along, so ask
+        -- that instead of guessing.  A runtime that answers NOTHING_IN_HAND is
+        -- believed: that is a real empty hand, not a missing player.
+        if text == nil and (why == 'no_player' or why == 'no_runtime'
+                            or why == 'no_local_player') then
+            local mem = prio_weapon()
+            if mem then text, via, why = mem, 'memory', nil end
+        end
         if not pok then
             HAND.ok, HAND.type = true, nil
             HAND.reason = 'call failed: ' .. tostring(text)

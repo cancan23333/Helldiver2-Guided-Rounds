@@ -8,14 +8,14 @@ steers onto it — **damage, muzzle velocity and ballistics remain the weapon's
 own values**.
 
 - Authors: cancan2333 & SoS2430
-- Version: 1.9.16
+- Version: 1.9.17
 - Requires: Bingus Shared Loader v15+, Vanilla Plus Megapack. **HD2Runtime optional** (only used to sync the packages to the lobby; every machine with the mod loads them locally)
 - Source: `docs/guided_rounds.lua` · Build: `build.py`
 
 ## Install
 
 1. Install the [HD2 Arsenal](https://www.nexusmods.com/helldivers2/mods/4664) loader.
-2. Import `Guided-Rounds-v1.9.14.zip` in HD2 Arsenal, and install
+2. Import `Guided-Rounds-v1.9.17.zip` in HD2 Arsenal, and install
    [Bingus Shared Loader](https://ayakamods.com/mods/bingus-shared-loader.3861/),
    [Vanilla Plus Megapack](https://www.nexusmods.com/helldivers2/mods/16294).
    [hd2runtime](https://ayakamods.com/mods/hd2runtime.4260/) is optional: an installed one
@@ -248,7 +248,7 @@ python build.py              # Addon + zip
 python build.py --check-against "../BingusSharedLoader-source-v19"
 ```
 
-Outputs `Addon/9ba626afa44a3aa3.patch_0` and `Guided-Rounds-v1.9.14.zip`.
+Outputs `Addon/9ba626afa44a3aa3.patch_0` and `Guided-Rounds-v1.9.17.zip`.
 `tools/` holds read-only checkers (syntax, globals, locals, package layout,
 persistence); see `tools/README.md` for their path requirements.
 
@@ -256,6 +256,7 @@ persistence); see `tools/README.md` for their path requirements.
 
 | Version | Change |
 | --- | --- |
+| v1.9.17 | Squad pink question mark: the built-in loader asks for the packages on the first frame (the watch waits for the package map itself), so the v1.9.13 path - one failed prove disables it for the session, then the runtime refuses - is gone |
 | v1.9.16 | Supports the weapons added by Scope of Authority / Stratagem Compendium (R-40, P-44, AMW-20, LAS-44, EAT-77/40/23): an older cfg gets them appended to `weapons=` on the first launch, then their class pages switch them like any other gun |
 | v1.9.15 | The built-in loader runs on every machine; HD2Runtime is only asked to sync the lobby, so a squad all running the mod sees no pink question mark |
 | v1.9.14 | Fixes the pink question mark clients saw with v1.9.13: the built-in loader waits for the game to start before proving/requesting, boot-time failures no longer disable it for the session; an installed HD2Runtime is preferred and the built-in loader is the fallback |

@@ -19,6 +19,21 @@ in-game **MODS** menu, all live-adjustable.
 
 ---
 
+## What's new in v1.9.17
+
+**The pink question mark is gone for squads on v1.9.13.** v1.9.13's built-in
+loader proved the game build once, at load time, and one failed prove disabled it
+for the whole session; the round then fell back to the runtime sync, which
+refuses on a game build newer than the runtime knows. The loader now asks for the
+packages on the very first frame (the watch waits until the game's package map
+exists), so the request lands before the first mission spawn on every machine
+that runs the mod.
+
+- A runtime of 0.40.1 or older is still used for its lobby sync; a newer one is
+  simply not asked.
+- If this machine's game build is one the loader cannot prove, it says so once in
+  the log and the rest of the mod keeps working.
+
 ## What's new in v1.9.16
 
 **Add-on weapons are guided out of the box.** Scope of Authority's R-40
@@ -75,7 +90,7 @@ and v1.9.0 (category pages).
 ## Install
 
 1. Install the mod loader: [HD2 Arsenal](https://www.nexusmods.com/helldivers2/mods/4664).
-2. In HD2 Arsenal, import `Guided-Rounds-v1.9.14.zip` and make sure these are
+2. In HD2 Arsenal, import `Guided-Rounds-v1.9.17.zip` and make sure these are
    installed too:
    - [Bingus Shared Loader](https://ayakamods.com/mods/bingus-shared-loader.3861/)
    - [hd2runtime](https://ayakamods.com/mods/hd2runtime.4260/) — optional: preferred when
@@ -143,12 +158,13 @@ python build.py
 ```
 
 Python 3 only, no game or SDK needed. Produces
-`Addon/9ba626afa44a3aa3.patch_0` and `Guided-Rounds-v1.9.14.zip`.
+`Addon/9ba626afa44a3aa3.patch_0` and `Guided-Rounds-v1.9.17.zip`.
 `--check-against` compares the output with BingusSharedLoader's reference
 packer.
 
 ## Version
 
+- **v1.9.17** — the built-in loader asks for the packages on the first frame (no 20 s delay), so a squad all running the mod no longer sees the v1.9.13 pink question mark
 - **v1.9.16** — Scope of Authority / Stratagem Compendium weapons (R-40, P-44, AMW-20, LAS-44, EAT-77/40/23) are guided out of the box
 - **v1.9.15** — the built-in loader always runs locally; HD2Runtime is only asked to sync the lobby
 - **v1.9.14** — fixes the pink question mark clients saw with v1.9.13 (the built-in loader now waits for the game); HD2Runtime preferred, built-in fallback

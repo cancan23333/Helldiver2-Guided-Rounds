@@ -1,8 +1,9 @@
-[size=6][b]Guided Rounds v1.9.16 —— 制导弹丸 / Guided Rounds[/b][/size]
+[size=6][b]Guided Rounds v1.9.17 —— 制导弹丸 / Guided Rounds[/b][/size]
 [center][i]把 P-92 法令手枪的原版制导机制，装到武器清单里的每一把枪上[/i][/center]
 [center][i]The P-92 Warrant's own guidance, ported to every weapon on the list[/i][/center]
 
-[center][size=5][b][color=#008000]★ v1.9.16 —— 支持 Scope of Authority / Stratagem Compendium 的新武器：R-40、P-44、AMW-20、LAS-44、EAT-77/40/23 开箱即可制导 ★[/color][/b][/size]
+[center][size=5][b][color=#008000]★ v1.9.17 —— 组队粉问号修复：内置装载器从第一帧就请求弹丸资源包，开打前已驻留；全队都装本 mod 时不再出现 1.9.13 的粉问号 ★[/color][/b][/size]
+[center][size=5][b][color=#008000]v1.9.16 —— 支持 Scope of Authority / Stratagem Compendium 的新武器：R-40、P-44、AMW-20、LAS-44、EAT-77/40/23 开箱即可制导 ★[/color][/b][/size]
 [b]「全局优先级层」这个开关删掉了[/b]，中间层出厂就是开着的。真想关掉它，只能手动把配置文件里的[b]glob_on[/b] 改成 0——那样 12～19 这几页（单枪优先级、瞄准优先级、5 页阵营优先级）整个都不会注册，菜单里自然也就没有它们，这正是开关做不到的事（选项包的行只能加、不能删）。另外，[b]关掉「手动瞄准优先级」以后，那 5 页默认写的就是全局表[/b]，页名前缀也会跟着变成「全局」——关掉单枪那层之后，本来也只有全局表还有意义。[b]The GLOBAL PRIORITY LAYER row is gone[/b]: the middle layer is on as shipped, and switching it off is a cfg edit (glob_on=0) that unregisters pages 12-19 entirely - something a toggle row could never do, since rows can only be added, never removed. Turning MANUAL AIM PRIORITY off now also puts the five faction pages back on the global table and titles them GLOBAL.[/center]
 
 [hr]
@@ -118,7 +119,7 @@
 [size=5][b]已知问题[/b][/size]
 [list]
 [*][b]开局时有一小段扫描（正常，不修复）[/b]：mod 要先在内存里找到游戏数据表，一次性开销，找到后不再扫描。v1.9.2 起预算降到 1.5 毫秒/帧（原来 4），同样的查找拖得更长但基本不卡；cfg 的 [font=courier]scan_ms[/font] 仍可手改
-[*][b]没装本 mod 的队友会看到粉色问号弹丸[/b]：弹丸被换成 P-92 的弹丸实体，而资源包由每台机器自己加载，没装本 mod 的客机没有这个包。[b]队友也装本 mod（v1.9.15 起自动加载）就不会出现；否则请队友也装本 mod（推荐），或装 HD2Runtime 并保证双方版本一致。[/b]
+[*][b]没装本 mod 的队友会看到粉色问号弹丸[/b]：弹丸被换成 P-92 的弹丸实体，而资源包由每台机器自己加载，没装本 mod 的客机没有这个包。[b]队友也装本 mod（v1.9.15 起自动加载，v1.9.17 起开打前就驻留）就不会出现；否则请队友也装本 mod（推荐），或装 HD2Runtime 并保证双方版本一致。[/b]
 [*][b]激光、电弧、火焰、喷射类等非弹丸武器无法制导，且不会支持[/b]（没有可追踪的弹丸）
 [*][b]认知干扰器的本体不再出现在锁定清单里[/b]（v1.9.0 起有意移除）；它的可摧毁电源可以锁。想锁本体：cfg 加 [font=courier]targets_extra=0x1445DF29152C9BE2[/font]
 [*]近战、投掷物与非玩家武器行不列在菜单里（仍可写进 cfg 的 [font=courier]weapons=[/font]）
@@ -145,7 +146,7 @@
 
 [hr]
 
-[size=6][b]Guided Rounds v1.9.16 —— Guided Rounds[/b][/size]
+[size=6][b]Guided Rounds v1.9.17 —— Guided Rounds[/b][/size]
 [center][i]The P-92 Warrant's own guidance, ported to every weapon on the list[/i][/center]
 
 [size=5][b]In one line[/b][/size]
@@ -259,7 +260,7 @@ The escape menu's [b]MODS[/b] tab carries these categories (the new ModOptionsMe
 [size=5][b]Known issues[/b][/size]
 [list]
 [*][b]A short scan when a mission starts (expected, not going to be fixed)[/b]: the addon has to locate the game's data tables in memory once. Since v1.9.2 the budget is 1.5 ms/frame instead of 4 - the same search takes longer but no longer stutters; [font=courier]scan_ms[/font] in the cfg still overrides it
-[*][b]Squadmates without this mod see pink question-mark rounds[/b]: the round is swapped for the P-92 projectile entity and every machine loads the packages itself, so a client without the mod has no package. [b]A squadmate who also runs this mod (from v1.9.15 it always loads locally) sees the round normally; otherwise ask them to install it (recommended), or install HD2Runtime on both sides on the same version.[/b]
+[*][b]Squadmates without this mod see pink question-mark rounds[/b]: the round is swapped for the P-92 projectile entity and every machine loads the packages itself, so a client without the mod has no package. [b]A squadmate who also runs this mod (from v1.9.15 it always loads locally; from v1.9.17 before the first shot) sees the round normally; otherwise ask them to install it (recommended), or install HD2Runtime on both sides on the same version.[/b]
 [*][b]Non-projectile weapons cannot be guided and never will be[/b] (laser, arc, flame, spray — there is no projectile to steer)
 [*][b]The Cognitive Disruptor body is deliberately not a target since v1.9.0[/b]; its destructible power unit is. To allow the body again: [font=courier]targets_extra=0x1445DF29152C9BE2[/font]
 [*]Melee weapons, throwables and non-player weapon rows are not in the menu (the cfg's [font=courier]weapons=[/font] line still accepts them)

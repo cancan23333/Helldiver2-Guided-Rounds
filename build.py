@@ -1,4 +1,4 @@
-"""Build Guided-Rounds-v1.9.16: the STINGRAY Lua archive and the installer ZIP.
+"""Build Guided-Rounds-v1.9.17: the STINGRAY Lua archive and the installer ZIP.
 
 The mod is a Bingus Shared Loader "addon": the Lua source in docs/ is packed as
 the game resource mods/cancan2333/guided_rounds inside a patch archive, and the
@@ -8,7 +8,7 @@ The archive writer below is the format BingusSharedLoader/scripts/archive.py and
 build_addon.py produce; build.py reproduces their output byte for byte (see
 --check-against), so the package can be rebuilt without any external tooling.
 
-    python build.py                       build Addon/ and Guided-Rounds-v1.9.16.zip
+    python build.py                       build Addon/ and Guided-Rounds-v1.9.17.zip
     python build.py --check-against DIR   also diff against the reference builder
 """
 import argparse
@@ -24,7 +24,7 @@ WORKSPACE = ROOT.parent
 
 RESOURCE = 'mods/cancan2333/guided_rounds'
 GUID = 'adb1ed64-ac71-5476-8acb-9909042fca85'
-DISPLAY_NAME = 'Guided Rounds v1.9.16'
+DISPLAY_NAME = 'Guided Rounds v1.9.17'
 SOURCE = ROOT / 'docs' / 'guided_rounds.lua'
 MANIFEST = ROOT / 'manifest.json'
 ARCHIVE = '9ba626afa44a3aa3.patch_0'

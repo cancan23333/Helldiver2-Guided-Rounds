@@ -1,6 +1,6 @@
 """Independent check of the built installer package.
 
-Reads Guided-Rounds-v1.9.16.zip with nothing but struct/zipfile and re-derives the
+Reads Guided-Rounds-v1.9.17.zip with nothing but struct/zipfile and re-derives the
 Lua resource from the archive, then compares it with docs/guided_rounds.lua and
 with the v1.8.0 package layout."""
 import hashlib
@@ -76,8 +76,8 @@ check('same GUID as v1.8.0 (upgrade, not a new mod)',
 check('Version is a string and bumped like v1.8.0',
       isinstance(manifest['Version'], str)
       and type(manifest['Version']) is type(old_manifest['Version'])
-      and manifest['Version'] == '1.9.16', repr(manifest['Version']))
-check('name bumped', manifest['Name'] == 'Guided Rounds v1.9.16', manifest['Name'])
+      and manifest['Version'] == '1.9.17', repr(manifest['Version']))
+check('name bumped', manifest['Name'] == 'Guided Rounds v1.9.17', manifest['Name'])
 check('option includes Addon',
       manifest['Options'][0]['Include'] == old_manifest['Options'][0]['Include'])
 check('option keys match v1.8.0',
